@@ -1,20 +1,34 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, getAdminSession } from "@/lib/auth";
 
 // Layout for every /admin page (admin-panel developer).
 // Lives in its own route group, so the store header/footer are not shown here.
+
+// Admin panel reads session cookies at request time.
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Admin",
   robots: { index: false, follow: false },
 };
 
-export default function AdminLayout({ children }: LayoutProps<"/admin">) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const session = await getAdminSession();
+
+  // If user is not authenticated, render clean centered page without sidebar (for /admin/login)
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen">
-      <AdminSidebar />
+      <AdminSidebar session={session} />
       <main className="flex-1 bg-muted/30 p-6">
         <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
           <AdminGate>{children}</AdminGate>
