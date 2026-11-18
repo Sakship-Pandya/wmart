@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Albert_Sans, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 // Root layout: shared by the store (shop) and the admin panel (admin).
 // Store header/footer live in app/(shop)/layout.tsx, admin sidebar in app/(admin)/admin/layout.tsx.
 
-const geistSans = Geist({
+// Albert Sans is the font used on the old wmart.co.in site.
+const albertSans = Albert_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
 });
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${albertSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

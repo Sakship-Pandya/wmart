@@ -1,4 +1,4 @@
-// TODO (admin): order list, order details, status updates, Shiprocket booking.
+// TODO (admin): order list, order details, status updates, Delhivery shipment booking.
 export default function Page() {
   return (
     <div className="py-12">
