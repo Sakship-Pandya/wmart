@@ -54,7 +54,7 @@ src/
       pages/[slug]     /pages/refund-policy, ...
     (admin)/admin/     admin panel – sidebar layout, login check on every request
       products, orders, customers, coupons, import
-    api/webhooks/      Razorpay and Shiprocket callbacks
+    api/webhooks/      PayU (payments) and Delhivery (shipping) callbacks
   components/
     ui/                shadcn/ui components (add more: npx shadcn@latest add <name>)
     shop/              Header, Footer, SearchBar, ProductCard, ProductGrid, PriceTag
