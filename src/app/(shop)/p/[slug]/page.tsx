@@ -2,13 +2,13 @@ import { Suspense } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PriceTag } from "@/components/shop/price-tag";
+import { AddToCartForm } from "@/components/shop/cart/add-to-cart-form";
 import { getProductBySlug } from "@/server/queries/products";
 
 // Product page, e.g. /p/hp-hs04-41wh-battery
-// TODO (store UI): image gallery, add-to-cart action, pincode check, specs table, JSON-LD, reviews.
+// TODO (store UI): image gallery, pincode check, specs table, JSON-LD, reviews.
 export default function ProductPage({ params }: PageProps<"/p/[slug]">) {
   return (
     <Suspense fallback={<Skeleton className="h-96 w-full" />}>
@@ -44,10 +44,8 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
         </div>
         <h1 className="text-2xl font-bold">{product.title}</h1>
         <PriceTag mrp={product.mrp} price={product.price} />
-        <p className="text-sm">{product.stock > 0 ? "In stock" : "Out of stock"}</p>
-        <Button size="lg" disabled={product.stock <= 0}>
-          Add to cart
-        </Button>
+        <p className="text-sm">{product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}</p>
+        <AddToCartForm productId={product.id} stock={product.stock} />
 
         {product.partNumbers.length > 0 && (
           <div>
