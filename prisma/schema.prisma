@@ -1,0 +1,91 @@
+// WMart database schema.
+// Owner: admin-panel developer. Tell the other developer before changing it.
+// After editing: npm run db:migrate -- --name what-changed   (then commit the migration folder)
+//
+// Money is always stored in paise as whole numbers: ₹1,799 = 179900.
+// Phase 1 = product catalogue. Customers, carts, orders, payments, shipments,
+// coupons, reviews and invoices are added in later phases.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Brand {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  products Product[]
+}
+
+model Product {
+  id             String            @id @default(cuid())
+  slug           String            @unique
+  title          String
+  description    String?
+  brandId        String
+  brand          Brand             @relation(fields: [brandId], references: [id])
+  categoryId     String
+  category       Category          @relation(fields: [categoryId], references: [id])
+  mrp            Int // in paise
+  price          Int // selling price in paise, GST included
+  hsnCode        String? // for GST invoices
+  gstRate        Int               @default(18)
+  stock          Int               @default(0)
+  isOriginal     Boolean           @default(false) // OEM vs compatible
+  isActive       Boolean           @default(true) // hidden from the store when false
+  specs          Json? // voltage, Wh, cells, connector size...
+  images         ProductImage[]
+  partNumbers    PartNumber[]
+  compatibleWith CompatibleModel[]
+  oldUrls        String[] // old Shopify/WooCommerce URLs, used for 301 redirects
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([brandId])
+  @@index([categoryId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  url       String
+  alt       String?
+  position  Int     @default(0)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+// "HS04", "MR90Y", "807956-001" – what customers actually search for
+model PartNumber {
+  id        String  @id @default(cuid())
+  code      String
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([productId])
+}
+
+// "Dell Inspiron 3521", "HP Pavilion 15-ac"
+model CompatibleModel {
+  id        String  @id @default(cuid())
+  name      String
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([name])
+  @@index([productId])
+}
