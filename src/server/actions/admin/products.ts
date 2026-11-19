@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { productSchema, generateSlug, type ProductFormValues } from "@/lib/validations/product";
+import type { Prisma } from "@/generated/prisma/client";
 
 // Admin server actions (owned by the admin-panel developer).
 // Every action must call requireAdmin() first.
@@ -231,3 +232,137 @@ export async function updateProductStock(productId: string, stock: number) {
 
   return { success: true, stock: updated.stock };
 }
+
+export async function deleteManyProducts(productIds: string[]) {
+  await requireAdmin();
+
+  if (!productIds || productIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.partNumber.deleteMany({
+      where: { productId: { in: productIds } },
+    });
+    await tx.compatibleModel.deleteMany({
+      where: { productId: { in: productIds } },
+    });
+    await tx.productImage.deleteMany({
+      where: { productId: { in: productIds } },
+    });
+    await tx.product.deleteMany({
+      where: { id: { in: productIds } },
+    });
+  });
+
+  revalidatePath("/admin/products");
+  revalidatePath("/(shop)", "layout");
+
+  return { success: true, count: productIds.length };
+}
+
+export async function setManyProductsActive(productIds: string[], isActive: boolean) {
+  await requireAdmin();
+
+  if (!productIds || productIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  await db.product.updateMany({
+    where: { id: { in: productIds } },
+    data: { isActive },
+  });
+
+  revalidatePath("/admin/products");
+  revalidatePath("/(shop)", "layout");
+
+  return { success: true, count: productIds.length };
+}
+
+export interface AdminProductFilterCriteria {
+  q?: string;
+  brand?: string;
+  category?: string;
+  status?: "all" | "active" | "inactive" | "out-of-stock" | "in-stock";
+}
+
+function buildAdminProductFilterWhere(filters?: AdminProductFilterCriteria): Prisma.ProductWhereInput {
+  if (!filters) return {};
+  const { q, brand, category, status = "all" } = filters;
+  const trimmed = q?.trim();
+
+  return {
+    ...(trimmed
+      ? {
+          OR: [
+            { title: { contains: trimmed, mode: "insensitive" } },
+            { slug: { contains: trimmed, mode: "insensitive" } },
+            { partNumbers: { some: { code: { contains: trimmed, mode: "insensitive" } } } },
+            { compatibleWith: { some: { name: { contains: trimmed, mode: "insensitive" } } } },
+          ],
+        }
+      : {}),
+    ...(brand ? { brand: { slug: brand } } : {}),
+    ...(category ? { category: { slug: category } } : {}),
+    ...(status === "active" ? { isActive: true } : {}),
+    ...(status === "inactive" ? { isActive: false } : {}),
+    ...(status === "out-of-stock" ? { stock: { lte: 0 } } : {}),
+    ...(status === "in-stock" ? { stock: { gt: 0 } } : {}),
+  };
+}
+
+export async function deleteAllFilteredProducts(filters?: AdminProductFilterCriteria) {
+  await requireAdmin();
+  const where = buildAdminProductFilterWhere(filters);
+
+  const products = await db.product.findMany({
+    where,
+    select: { id: true },
+  });
+
+  if (products.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const ids = products.map((p) => p.id);
+
+  await db.$transaction(async (tx) => {
+    await tx.partNumber.deleteMany({
+      where: { productId: { in: ids } },
+    });
+    await tx.compatibleModel.deleteMany({
+      where: { productId: { in: ids } },
+    });
+    await tx.productImage.deleteMany({
+      where: { productId: { in: ids } },
+    });
+    await tx.product.deleteMany({
+      where: { id: { in: ids } },
+    });
+  });
+
+  revalidatePath("/admin/products");
+  revalidatePath("/(shop)", "layout");
+
+  return { success: true, count: ids.length };
+}
+
+export async function setAllFilteredProductsActive(
+  isActive: boolean,
+  filters?: AdminProductFilterCriteria
+) {
+  await requireAdmin();
+  const where = buildAdminProductFilterWhere(filters);
+
+  const updated = await db.product.updateMany({
+    where,
+    data: { isActive },
+  });
+
+  revalidatePath("/admin/products");
+  revalidatePath("/(shop)", "layout");
+
+  return { success: true, count: updated.count };
+}
+
+

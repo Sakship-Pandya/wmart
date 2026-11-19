@@ -9,11 +9,19 @@ const globalForPrisma = globalThis as unknown as {
   pgPool?: Pool;
 };
 
+function getConnectionString(): string | undefined {
+  const url = process.env.DATABASE_URL;
+  if (!url) return undefined;
+  // Use sslmode=verify-full to suppress pg-connection-string security deprecation warning
+  return url.replace("sslmode=require", "sslmode=verify-full");
+}
+
 function createClient() {
+  const connectionString = getConnectionString();
   const pool =
     globalForPrisma.pgPool ??
     new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString,
       max: 10,
     });
 

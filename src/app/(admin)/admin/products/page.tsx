@@ -124,7 +124,16 @@ async function ProductContent({
       />
 
       {/* Table */}
-      <ProductTable products={products} />
+      <ProductTable
+        products={products}
+        totalCount={totalCount}
+        filters={{
+          q: params.q,
+          brand: params.brand,
+          category: params.category,
+          status: params.status,
+        }}
+      />
 
       {/* Pagination */}
       <ProductPagination

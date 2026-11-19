@@ -29,7 +29,10 @@ export function ProductTableSkeleton() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-14" />
+              <TableHead className="w-14 px-3">
+                <Skeleton className="size-4 rounded" />
+              </TableHead>
+              <TableHead className="w-16">Image</TableHead>
               <TableHead>Product</TableHead>
               <TableHead>Category / Brand</TableHead>
               <TableHead>Price</TableHead>
@@ -41,6 +44,9 @@ export function ProductTableSkeleton() {
           <TableBody>
             {Array.from({ length: 6 }).map((_, i) => (
               <TableRow key={i}>
+                <TableCell className="px-3">
+                  <Skeleton className="size-4 rounded" />
+                </TableCell>
                 <TableCell>
                   <Skeleton className="size-10 rounded-md" />
                 </TableCell>
