@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { parseCSV } from "@/lib/csv-parser";
 import { generateSlug } from "@/lib/validations/product";
+import { specsFromRow } from "@/lib/import-specs";
 
 export interface ImportResult {
   success: boolean;
@@ -313,20 +314,31 @@ export async function importProductsCsvAction(csvContent: string): Promise<Impor
           create: { name: categoryName, slug: categorySlug },
         });
 
-        const partCodes = (row["PartNumbers"] || row["partNumbers"] || row["SKU"] || "")
-          .split(/[,;\n]+/)
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0);
+        // List cells may be separated by "|", ",", ";" or new lines.
+        // Column names are accepted in both PascalCase and snake_case
+        // (e.g. "Images" or "image_urls"), matching the WMart sample CSVs.
+        const splitList = (value: string | undefined) =>
+          (value || "")
+            .split(/[|,;\n]+/)
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0);
 
-        const compatibleModels = (row["CompatibleModels"] || row["compatibleWith"] || "")
-          .split(/[,;\n]+/)
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0);
+        const partCodes = splitList(
+          row["PartNumbers"] || row["partNumbers"] || row["part_numbers"] || row["SKU"] || row["sku"],
+        );
 
-        const imageUrls = (row["Images"] || row["images"] || row["Image"] || "")
-          .split(/[,;\n]+/)
-          .map((s) => s.trim())
-          .filter((s) => s.startsWith("http"));
+        const compatibleModels = splitList(
+          row["CompatibleModels"] || row["compatibleWith"] || row["compatible_models"],
+        );
+
+        const imageUrls = splitList(
+          row["Images"] || row["images"] || row["Image"] || row["image_urls"] || row["ImageUrls"],
+        ).filter((s) => s.startsWith("http"));
+
+        const hsnCode = (row["HSN"] || row["hsnCode"] || row["hsn_code"] || "").trim() || null;
+        const activeCell = (row["IsActive"] || row["isActive"] || row["is_active"] || "").trim().toLowerCase();
+        const isActive = !["false", "0", "no"].includes(activeCell);
+        const specs = specsFromRow(row, categoryName);
 
         const existing = await db.product.findUnique({
           where: { slug },
@@ -349,7 +361,9 @@ export async function importProductsCsvAction(csvContent: string): Promise<Impor
                 price: priceInPaise,
                 mrp: mrpInPaise,
                 stock: isNaN(stockNum) ? 0 : Math.max(0, stockNum),
-                isActive: true,
+                hsnCode,
+                specs,
+                isActive,
                 partNumbers: {
                   create: partCodes.map((code) => ({ code })),
                 },
@@ -374,7 +388,9 @@ export async function importProductsCsvAction(csvContent: string): Promise<Impor
               price: priceInPaise,
               mrp: mrpInPaise,
               stock: isNaN(stockNum) ? 0 : Math.max(0, stockNum),
-              isActive: true,
+              hsnCode,
+              specs,
+              isActive,
               partNumbers: {
                 create: partCodes.map((code) => ({ code })),
               },
