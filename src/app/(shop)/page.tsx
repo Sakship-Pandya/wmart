@@ -1,15 +1,17 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ProductGrid, ProductGridSkeleton } from "@/components/shop/product-grid";
+import { NoProducts } from "@/components/shop/no-products";
+import {
+  listBrandsWithProducts,
+  listCategoriesWithProducts,
+  listLatestProducts,
+} from "@/server/queries/products";
 
-const categories = [
-  { href: "/c/laptop-batteries", title: "Laptop Batteries", note: "2,700+ models" },
-  { href: "/c/laptop-adapters", title: "Laptop Adapters", note: "Original chargers" },
-  { href: "/c/power-cables", title: "Power Cables", note: "Laptop & desktop" },
-  { href: "/c/accessories", title: "Accessories", note: "Keyboards & more" },
-];
-
-const brands = ["hp", "dell", "lenovo", "asus", "acer", "apple"];
-
-// Home page. TODO (store UI): hero banner, bestsellers, brand tabs, FAQ, trust badges.
+// Home page. Categories, brands and products come from the database, so they always match
+// whatever the admin panel / CSV import created.
+// TODO (store UI): hero banner, bestsellers, Featured/Sale/New tabs, FAQ, trust badges.
 export default function HomePage() {
   return (
     <div className="space-y-12">
@@ -25,30 +27,76 @@ export default function HomePage() {
 
       <section>
         <h2 className="mb-4 text-xl font-semibold">Shop by category</h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {categories.map((c) => (
-            <Link key={c.href} href={c.href} className="rounded-lg border p-4 hover:shadow-md">
-              <p className="font-medium">{c.title}</p>
-              <p className="text-sm text-muted-foreground">{c.note}</p>
-            </Link>
-          ))}
-        </div>
+        <Suspense fallback={<div className="grid grid-cols-2 gap-4 md:grid-cols-4">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}</div>}>
+          <CategoryTiles />
+        </Suspense>
       </section>
 
       <section>
         <h2 className="mb-4 text-xl font-semibold">Shop by brand</h2>
-        <div className="flex flex-wrap gap-3">
-          {brands.map((b) => (
-            <Link
-              key={b}
-              href={`/brand/${b}`}
-              className="rounded-full border px-4 py-1.5 text-sm uppercase hover:bg-muted"
-            >
-              {b}
-            </Link>
-          ))}
-        </div>
+        <Suspense fallback={<Skeleton className="h-9 w-2/3 rounded-full" />}>
+          <BrandChips />
+        </Suspense>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-xl font-semibold">New products</h2>
+        <Suspense fallback={<ProductGridSkeleton count={8} />}>
+          <LatestProducts />
+        </Suspense>
       </section>
     </div>
+  );
+}
+
+async function CategoryTiles() {
+  const categories = await listCategoriesWithProducts(8);
+  if (categories.length === 0) {
+    return <p className="text-muted-foreground">No categories yet – add products in the admin panel.</p>;
+  }
+  return (
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      {categories.map((c) => (
+        <Link key={c.slug} href={`/c/${c.slug}`} className="rounded-lg border p-4 transition hover:border-brand hover:shadow-md">
+          <p className="font-medium text-heading">{c.name}</p>
+          <p className="text-sm text-muted-foreground">
+            {c.count} {c.count === 1 ? "product" : "products"}
+          </p>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+async function BrandChips() {
+  const brands = await listBrandsWithProducts();
+  if (brands.length === 0) return <p className="text-muted-foreground">No brands yet.</p>;
+  return (
+    <div className="flex flex-wrap gap-3">
+      {brands.map((b) => (
+        <Link
+          key={b.slug}
+          href={`/brand/${b.slug}`}
+          className="rounded-full border px-4 py-1.5 text-sm font-medium hover:border-brand hover:text-brand"
+        >
+          {b.name}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+async function LatestProducts() {
+  const products = await listLatestProducts(8);
+  return (
+    <ProductGrid
+      products={products}
+      empty={
+        <NoProducts
+          title="No products yet"
+          message="Products added in the admin panel or imported from a CSV will appear here."
+        />
+      }
+    />
   );
 }
