@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ShoppingCart, User } from "lucide-react";
 import { getCartCount } from "@/server/queries/cart";
+import { listCategoriesWithProducts } from "@/server/queries/products";
 import { SearchBar } from "./search-bar";
 
 // Orange bubble with the number of items in the cart (reads the cart cookie on each request).
@@ -19,12 +20,19 @@ async function CartCount() {
   );
 }
 
-const nav = [
-  { href: "/c/laptop-batteries", label: "Batteries" },
-  { href: "/c/laptop-adapters", label: "Adapters" },
-  { href: "/c/power-cables", label: "Power Cables" },
-  { href: "/c/accessories", label: "Accessories" },
-];
+// Menu of the categories that have products in the database (so the links always work).
+async function CategoryNav() {
+  const categories = await listCategoriesWithProducts(8);
+  return (
+    <>
+      {categories.map((c) => (
+        <Link key={c.slug} href={`/c/${c.slug}`} className="whitespace-nowrap hover:text-brand">
+          {c.name}
+        </Link>
+      ))}
+    </>
+  );
+}
 
 export function Header() {
   return (
@@ -49,12 +57,10 @@ export function Header() {
           </Suspense>
         </Link>
       </div>
-      <nav className="mx-auto flex max-w-7xl gap-6 overflow-x-auto px-4 pb-3 text-sm">
-        {nav.map((item) => (
-          <Link key={item.href} href={item.href} className="whitespace-nowrap hover:underline">
-            {item.label}
-          </Link>
-        ))}
+      <nav aria-label="Categories" className="mx-auto flex min-h-8 max-w-7xl gap-6 overflow-x-auto px-4 pb-3 text-sm">
+        <Suspense fallback={null}>
+          <CategoryNav />
+        </Suspense>
       </nav>
     </header>
   );
