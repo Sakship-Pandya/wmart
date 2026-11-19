@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { parseCSV } from "@/lib/csv-parser";
 import { generateSlug } from "@/lib/validations/product";
+import { specsFromRow } from "@/lib/import-specs";
 
 export interface ImportResult {
   success: boolean;
@@ -337,6 +338,7 @@ export async function importProductsCsvAction(csvContent: string): Promise<Impor
         const hsnCode = (row["HSN"] || row["hsnCode"] || row["hsn_code"] || "").trim() || null;
         const activeCell = (row["IsActive"] || row["isActive"] || row["is_active"] || "").trim().toLowerCase();
         const isActive = !["false", "0", "no"].includes(activeCell);
+        const specs = specsFromRow(row, categoryName);
 
         const existing = await db.product.findUnique({
           where: { slug },
@@ -360,6 +362,7 @@ export async function importProductsCsvAction(csvContent: string): Promise<Impor
                 mrp: mrpInPaise,
                 stock: isNaN(stockNum) ? 0 : Math.max(0, stockNum),
                 hsnCode,
+                specs,
                 isActive,
                 partNumbers: {
                   create: partCodes.map((code) => ({ code })),
@@ -386,6 +389,7 @@ export async function importProductsCsvAction(csvContent: string): Promise<Impor
               mrp: mrpInPaise,
               stock: isNaN(stockNum) ? 0 : Math.max(0, stockNum),
               hsnCode,
+              specs,
               isActive,
               partNumbers: {
                 create: partCodes.map((code) => ({ code })),
