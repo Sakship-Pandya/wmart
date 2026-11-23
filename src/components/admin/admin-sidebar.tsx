@@ -24,7 +24,18 @@ const items = [
   { href: "/admin/import", label: "Bulk import", icon: Upload },
 ] as const;
 
-export function AdminSidebar({ session }: { session?: AdminSession | null }) {
+export interface AdminNavCounts {
+  ordersToProcess: number;
+  needsRestock: number;
+}
+
+export function AdminSidebar({ session, counts }: { session?: AdminSession | null; counts?: AdminNavCounts }) {
+  const badges: Partial<Record<(typeof items)[number]["href"], { value: number; label: string; tone: string }>> = counts
+    ? {
+        "/admin/orders": { value: counts.ordersToProcess, label: "orders to process", tone: "bg-primary text-primary-foreground" },
+        "/admin/products": { value: counts.needsRestock, label: "products need restocking", tone: "bg-amber-500 text-white" },
+      }
+    : {};
   return (
     <aside className="hidden w-56 shrink-0 border-r bg-background p-4 md:flex md:flex-col md:justify-between min-h-screen">
       <div>
@@ -32,16 +43,25 @@ export function AdminSidebar({ session }: { session?: AdminSession | null }) {
           WMart Admin
         </Link>
         <nav className="space-y-1">
-          {items.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted"
-            >
-              <Icon className="size-4" />
-              {label}
-            </Link>
-          ))}
+          {items.map(({ href, label, icon: Icon }) => {
+            const badge = badges[href];
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted"
+              >
+                <Icon className="size-4" />
+                <span className="flex-1">{label}</span>
+                {badge && badge.value > 0 && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${badge.tone}`} title={`${badge.value} ${badge.label}`}>
+                    {badge.value}
+                    <span className="sr-only"> {badge.label}</span>
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 

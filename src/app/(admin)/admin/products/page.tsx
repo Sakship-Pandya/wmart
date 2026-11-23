@@ -11,6 +11,8 @@ import { ProductTable } from "@/components/admin/products/product-table";
 import { ProductFilters } from "@/components/admin/products/product-filters";
 import { ProductPagination } from "@/components/admin/products/product-pagination";
 import { ProductTableSkeleton } from "@/components/admin/products/product-table-skeleton";
+import type { ProductStatusFilter } from "@/lib/admin-product-filter";
+import { ExportLink } from "@/components/admin/shared/export-link";
 
 export const metadata = {
   title: "Products | WMart Admin",
@@ -21,7 +23,7 @@ interface ProductsPageProps {
     q?: string;
     brand?: string;
     category?: string;
-    status?: "all" | "active" | "inactive" | "out-of-stock" | "in-stock";
+    status?: ProductStatusFilter;
     sort?: "newest" | "oldest" | "price-asc" | "price-desc" | "stock-asc" | "stock-desc" | "title-asc";
     page?: string;
   }>;
@@ -43,6 +45,9 @@ export default function AdminProductsPage({ searchParams }: ProductsPageProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <Suspense fallback={null}>
+            <ExportLink endpoint="/api/admin/export/products" params={["q", "brand", "category", "status"]} />
+          </Suspense>
           <Link
             href="/admin/import"
             className={buttonVariants({ variant: "outline", size: "sm" })}
@@ -75,7 +80,7 @@ async function ProductContent({
     q?: string;
     brand?: string;
     category?: string;
-    status?: "all" | "active" | "inactive" | "out-of-stock" | "in-stock";
+    status?: ProductStatusFilter;
     sort?: "newest" | "oldest" | "price-asc" | "price-desc" | "stock-asc" | "stock-desc" | "title-asc";
     page?: string;
   }>;
@@ -102,7 +107,7 @@ async function ProductContent({
   return (
     <div className="space-y-4">
       {/* Stats Summary Bar */}
-      <div className="grid grid-cols-3 gap-3 sm:w-fit">
+      <div className="grid grid-cols-2 gap-3 sm:w-fit sm:grid-cols-4">
         <div className="rounded-md border bg-card px-3 py-1.5 text-xs">
           <span className="text-muted-foreground">Total:</span>{" "}
           <span className="font-semibold">{filterOptions.stats.total}</span>
@@ -111,10 +116,14 @@ async function ProductContent({
           <span className="text-muted-foreground">Active:</span>{" "}
           <span className="font-semibold text-emerald-600">{filterOptions.stats.active}</span>
         </div>
-        <div className="rounded-md border bg-card px-3 py-1.5 text-xs">
+        <Link href="/admin/products?status=low-stock" className="rounded-md border bg-card px-3 py-1.5 text-xs hover:bg-muted" title={`1 to ${filterOptions.stats.lowStockThreshold} units left`}>
+          <span className="text-muted-foreground">Low stock:</span>{" "}
+          <span className="font-semibold text-amber-600">{filterOptions.stats.lowStock}</span>
+        </Link>
+        <Link href="/admin/products?status=out-of-stock" className="rounded-md border bg-card px-3 py-1.5 text-xs hover:bg-muted">
           <span className="text-muted-foreground">Out of stock:</span>{" "}
           <span className="font-semibold text-destructive">{filterOptions.stats.outOfStock}</span>
-        </div>
+        </Link>
       </div>
 
       {/* Filter and Search Controls */}

@@ -159,6 +159,8 @@ export function ProductFilters({ brands, categories }: ProductFiltersProps) {
           <option value="inactive">Inactive / Draft</option>
           <option value="in-stock">In Stock</option>
           <option value="out-of-stock">Out of Stock</option>
+          <option value="low-stock">Low Stock</option>
+          <option value="needs-restock">Needs Restock (low + out)</option>
         </select>
 
         {/* Sort Filter */}
