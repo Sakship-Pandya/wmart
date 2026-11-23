@@ -3,8 +3,8 @@
 // After editing: npm run db:migrate -- --name what-changed   (then commit the migration folder)
 //
 // Money is always stored in paise as whole numbers: ₹1,799 = 179900.
-// Phase 1 = product catalogue. Customers, carts, orders, payments, shipments,
-// coupons, reviews and invoices are added in later phases.
+// Phase 1 = product catalogue. Phase 2 (DRAFT, end of this file) = customers,
+// addresses, orders, payments, shipments and coupons. Reviews come later.
 
 generator client {
   provider = "prisma-client"
@@ -50,6 +50,7 @@ model Product {
   partNumbers    PartNumber[]
   compatibleWith CompatibleModel[]
   oldUrls        String[] // old Shopify/WooCommerce URLs, used for 301 redirects
+  orderItems     OrderItem[]
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
@@ -88,4 +89,248 @@ model CompatibleModel {
 
   @@index([name])
   @@index([productId])
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Phase 2: customers, orders, payments (PayU), shipments (Delhivery), coupons.
+// DRAFT for review by both developers before the migration is created.
+//
+// Rules:
+// - Money in paise (Int), GST included, same as Product.price.
+// - Orders keep a snapshot of prices, titles and addresses, so editing a product
+//   or a saved address never changes an old order or its invoice.
+// - Guests can check out: Order.customerId is optional; email/phone are always stored.
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── Customers ────────────────────────────────────────────────────────────────
+
+model Customer {
+  id           String    @id @default(cuid())
+  email        String    @unique // stored lowercase
+  passwordHash String? // null for customers created by guest checkout
+  firstName    String?
+  lastName     String?
+  displayName  String?
+  phone        String? // 10-digit mobile
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  addresses    Address[]
+  orders       Order[]
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+}
+
+// One saved shipping and one saved billing address per customer
+// (My account > Addresses), used to prefill checkout.
+model Address {
+  id         String      @id @default(cuid())
+  customerId String
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type       AddressType
+  fullName   String
+  phone      String
+  line1      String // house no., building, street
+  line2      String? // area, landmark
+  city       String
+  state      String
+  pincode    String // 6 digits
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([customerId, type])
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING // waiting for PayU payment or COD confirmation
+  CONFIRMED // paid, or COD confirmed by phone/WhatsApp
+  PACKED
+  SHIPPED // handed to Delhivery
+  DELIVERED
+  CANCELLED
+  RETURNED // RTO or customer return completed
+}
+
+enum PaymentMethod {
+  PAYU
+  COD
+}
+
+enum PaymentStatus {
+  PENDING // PayU not completed yet, or COD not collected yet
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+model Order {
+  id          String    @id @default(cuid())
+  // Shown to customers as "WM" + number, e.g. WM10234. The migration should
+  // start the sequence above the old site's last order number.
+  orderNumber Int       @unique @default(autoincrement())
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  email       String // contact details at the time of ordering (guests too)
+  phone       String
+
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+
+  // Address snapshots: { fullName, phone, line1, line2, city, state, pincode }
+  shippingAddress Json
+  billingAddress  Json
+  // Buyer's state, copied from the address for GST (CGST+SGST vs IGST) and filtering.
+  placeOfSupply   String
+  intraState      Boolean // true = same state as the seller, so CGST + SGST
+  notes           String? // "Order notes" from checkout
+
+  // Totals in paise. total = subtotal - discount + shippingFee + codFee
+  subtotal    Int
+  discount    Int     @default(0)
+  shippingFee Int     @default(0)
+  codFee      Int     @default(0)
+  total       Int
+  couponId    String?
+  coupon      Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponCode  String? // snapshot, in case the coupon is later deleted
+
+  // GST invoice. Assigned when the order is confirmed; sequential per financial year.
+  invoiceNumber String?   @unique
+  invoicedAt    DateTime?
+
+  cancelReason String?
+  confirmedAt  DateTime?
+  shippedAt    DateTime?
+  deliveredAt  DateTime?
+  cancelledAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  items     OrderItem[]
+  payments  Payment[]
+  shipments Shipment[]
+  events    OrderEvent[]
+
+  @@index([status, createdAt])
+  @@index([paymentStatus])
+  @@index([customerId])
+  @@index([email])
+  @@index([phone])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String? // becomes null if the product is later deleted; the snapshot stays
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  // Snapshot at the time of ordering
+  title     String
+  slug      String
+  imageUrl  String?
+  hsnCode   String?
+  gstRate   Int
+  unitPrice Int // paise, GST included
+  mrp       Int
+  quantity  Int
+  lineTotal Int // unitPrice * quantity
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Timeline on the admin order page: status changes, notes, webhook events.
+model OrderEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type      String // e.g. "status:CONFIRMED", "payment:PAID", "shipment:IN_TRANSIT", "note"
+  message   String?
+  actor     String // "customer", "admin:<email>", "payu", "delhivery", "system"
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// ─── Payments (PayU) ──────────────────────────────────────────────────────────
+
+model Payment {
+  id               String        @id @default(cuid())
+  orderId          String
+  order            Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method           PaymentMethod
+  status           PaymentStatus @default(PENDING)
+  amount           Int // paise; must equal Order.total before marking PAID
+  txnId            String        @unique // our txnid sent to PayU (a retry gets a new one)
+  gatewayPaymentId String? // PayU mihpayid
+  gatewayResponse  Json? // verified PayU callback body, for support and disputes
+  refundedAmount   Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([orderId])
+}
+
+// ─── Shipments (Delhivery) ────────────────────────────────────────────────────
+
+enum ShipmentStatus {
+  PENDING // not booked with Delhivery yet
+  MANIFESTED // AWB created
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  RTO_IN_TRANSIT // returning to origin
+  RTO_DELIVERED
+  LOST
+}
+
+model Shipment {
+  id          String         @id @default(cuid())
+  orderId     String
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  courier     String         @default("Delhivery")
+  awb         String?        @unique // Delhivery tracking number
+  status      ShipmentStatus @default(PENDING)
+  lastUpdate  String? // latest scan text from Delhivery
+  codAmount   Int            @default(0) // paise to collect on delivery (0 for prepaid)
+  weightGrams Int?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+// ─── Coupons ──────────────────────────────────────────────────────────────────
+
+enum CouponType {
+  PERCENT // value = percent off, 1 to 100
+  FLAT // value = paise off
+}
+
+model Coupon {
+  id               String     @id @default(cuid())
+  code             String     @unique // stored uppercase
+  type             CouponType
+  value            Int
+  minOrderValue    Int? // paise
+  maxDiscount      Int? // paise, cap for PERCENT coupons
+  startsAt         DateTime?
+  expiresAt        DateTime?
+  usageLimit       Int? // total uses; null = unlimited
+  perCustomerLimit Int? // uses per email; null = unlimited
+  usedCount        Int        @default(0)
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  orders           Order[]
 }

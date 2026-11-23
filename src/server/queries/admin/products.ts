@@ -1,12 +1,14 @@
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import type { Prisma } from "@/generated/prisma/client";
+import { LOW_STOCK_THRESHOLD, lowStockWhere, needsRestockWhere, outOfStockWhere } from "@/lib/inventory";
+import { adminProductWhere, type ProductStatusFilter } from "@/lib/admin-product-filter";
 
 export interface AdminProductListParams {
   q?: string;
   brand?: string;
   category?: string;
-  status?: "all" | "active" | "inactive" | "out-of-stock" | "in-stock";
+  status?: ProductStatusFilter;
   sort?: "newest" | "oldest" | "price-asc" | "price-desc" | "stock-asc" | "stock-desc" | "title-asc";
   page?: number;
   pageSize?: number;
@@ -25,26 +27,7 @@ export async function getAdminProducts(params: AdminProductListParams = {}) {
     pageSize = 15,
   } = params;
 
-  const trimmedQuery = q?.trim();
-
-  const where: Prisma.ProductWhereInput = {
-    ...(trimmedQuery
-      ? {
-          OR: [
-            { title: { contains: trimmedQuery, mode: "insensitive" } },
-            { slug: { contains: trimmedQuery, mode: "insensitive" } },
-            { partNumbers: { some: { code: { contains: trimmedQuery, mode: "insensitive" } } } },
-            { compatibleWith: { some: { name: { contains: trimmedQuery, mode: "insensitive" } } } },
-          ],
-        }
-      : {}),
-    ...(brand ? { brand: { slug: brand } } : {}),
-    ...(category ? { category: { slug: category } } : {}),
-    ...(status === "active" ? { isActive: true } : {}),
-    ...(status === "inactive" ? { isActive: false } : {}),
-    ...(status === "out-of-stock" ? { stock: { lte: 0 } } : {}),
-    ...(status === "in-stock" ? { stock: { gt: 0 } } : {}),
-  };
+  const where = adminProductWhere({ q, brand, category, status });
 
   let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
   switch (sort) {
@@ -108,7 +91,7 @@ export async function getAdminProducts(params: AdminProductListParams = {}) {
 export async function getAdminProductFilterOptions() {
   await requireAdmin();
 
-  const [brands, categories, totalCount, activeCount, outOfStockCount] = await Promise.all([
+  const [brands, categories, totalCount, activeCount, outOfStockCount, lowStockCount] = await Promise.all([
     db.brand.findMany({
       select: { id: true, name: true, slug: true },
       orderBy: { name: "asc" },
@@ -119,7 +102,8 @@ export async function getAdminProductFilterOptions() {
     }),
     db.product.count(),
     db.product.count({ where: { isActive: true } }),
-    db.product.count({ where: { stock: { lte: 0 } } }),
+    db.product.count({ where: outOfStockWhere }),
+    db.product.count({ where: lowStockWhere }),
   ]);
 
   return {
@@ -129,6 +113,8 @@ export async function getAdminProductFilterOptions() {
       total: totalCount,
       active: activeCount,
       outOfStock: outOfStockCount,
+      lowStock: lowStockCount,
+      lowStockThreshold: LOW_STOCK_THRESHOLD,
     },
   };
 }
@@ -155,6 +141,7 @@ export async function getAdminDashboardSummary() {
     totalProducts,
     activeProducts,
     outOfStockProducts,
+    lowStockCount,
     totalBrands,
     totalCategories,
     recentProducts,
@@ -162,7 +149,8 @@ export async function getAdminDashboardSummary() {
   ] = await Promise.all([
     db.product.count(),
     db.product.count({ where: { isActive: true } }),
-    db.product.count({ where: { stock: { lte: 0 } } }),
+    db.product.count({ where: outOfStockWhere }),
+    db.product.count({ where: lowStockWhere }),
     db.brand.count(),
     db.category.count(),
     db.product.findMany({
@@ -174,9 +162,9 @@ export async function getAdminDashboardSummary() {
       },
     }),
     db.product.findMany({
-      where: { stock: { lte: 5 } },
-      orderBy: { stock: "asc" },
-      take: 5,
+      where: needsRestockWhere,
+      orderBy: [{ stock: "asc" }, { title: "asc" }],
+      take: 8,
       include: {
         brand: { select: { name: true } },
         category: { select: { name: true } },
@@ -189,6 +177,8 @@ export async function getAdminDashboardSummary() {
       totalProducts,
       activeProducts,
       outOfStockProducts,
+      lowStockCount,
+      lowStockThreshold: LOW_STOCK_THRESHOLD,
       totalBrands,
       totalCategories,
     },
