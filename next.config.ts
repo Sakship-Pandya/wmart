@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   // Object form (not `new URL(...)`): a URL object sets `search` to "", which rejects
   // any query string, and Shopify image URLs always end in "?v=<timestamp>".
   images: {
+    // Note: new URL("https://host/**") only allows links WITHOUT a "?..." part.
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       // Only wmartstore.in's own Shopify files, not every Shopify store.
