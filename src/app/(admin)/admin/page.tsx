@@ -28,6 +28,7 @@ import { RevenueChart } from "@/components/admin/dashboard/revenue-chart";
 import { getAdminSalesDashboard } from "@/server/queries/admin/dashboard";
 import { getAdminDashboardSummary } from "@/server/queries/admin/products";
 import { formatPrice } from "@/lib/format";
+import { shortenText } from "@/lib/text";
 import { asAddress, formatDateTimeIST, formatOrderNumber, orderStatusInfo, paymentStatusInfo } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 
@@ -165,8 +166,8 @@ async function DashboardContent() {
                       {t.product!.images[0] && <Image src={t.product!.images[0].url} alt="" fill sizes="36px" className="object-contain p-0.5" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <Link href={`/admin/products/${t.product!.id}/edit`} className="line-clamp-1 text-sm font-medium hover:underline">
-                        {t.product!.title}
+                      <Link href={`/admin/products/${t.product!.id}/edit`} title={t.product!.title} className="line-clamp-1 text-sm font-medium hover:underline">
+                        {shortenText(t.product!.title)}
                       </Link>
                       <p className="text-xs text-muted-foreground">
                         {t.quantity} sold · {t.product!.stock} in stock
@@ -266,8 +267,8 @@ async function DashboardContent() {
                 {catalogue.lowStockProducts.map((p) => (
                   <li key={p.id} className="flex items-center justify-between gap-2 py-2.5">
                     <div className="min-w-0 flex-1">
-                      <Link href={`/admin/products/${p.id}/edit`} className="block truncate font-medium hover:underline">
-                        {p.title}
+                      <Link href={`/admin/products/${p.id}/edit`} title={p.title} className="block truncate font-medium hover:underline">
+                        {shortenText(p.title)}
                       </Link>
                       <p className="text-xs text-muted-foreground">
                         {p.brand.name} · {p.category.name}

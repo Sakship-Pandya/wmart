@@ -42,6 +42,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { shortenText } from "@/lib/text";
 import { formatPrice, discountPercent } from "@/lib/format";
 import { ProductRowActions } from "./product-row-actions";
 import {
@@ -283,11 +284,13 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
 
       {/* Products Table */}
       <div className="rounded-lg border bg-card shadow-xs overflow-hidden">
-        <Table>
+        {/* table-fixed + w-full: columns keep their set widths and the table never grows
+            wider than the page, so there is no horizontal scrollbar. */}
+        <Table className="table-fixed">
           <TableHeader className="bg-muted/40">
             <TableRow>
               {/* Select All Checkbox & Dropdown */}
-              <TableHead className="w-14 px-3">
+              <TableHead className="w-12 px-3">
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
@@ -351,12 +354,12 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                 </div>
               </TableHead>
               <TableHead className="w-16">Image</TableHead>
-              <TableHead className="min-w-[260px]">Product</TableHead>
-              <TableHead className="w-36">Category & Brand</TableHead>
-              <TableHead className="w-32">Price & MRP</TableHead>
-              <TableHead className="w-28">Stock</TableHead>
-              <TableHead className="w-24">Status</TableHead>
-              <TableHead className="w-28 text-right">Actions</TableHead>
+              <TableHead>Product</TableHead>
+              <TableHead className="w-32 whitespace-normal">Category & Brand</TableHead>
+              <TableHead className="w-28 whitespace-normal">Price & MRP</TableHead>
+              <TableHead className="w-24">Stock</TableHead>
+              <TableHead className="w-20">Status</TableHead>
+              <TableHead className="w-24 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -406,14 +409,17 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                   </TableCell>
 
                   {/* Title & Metadata */}
-                  <TableCell>
-                    <div className="space-y-1">
+                  {/* Name cut to 50 characters + "..." (full name on hover). The table uses a
+                      fixed layout, so nothing in this cell can make the page scroll sideways. */}
+                  <TableCell className="whitespace-normal">
+                    <div className="min-w-0 space-y-1">
                       <div className="flex items-start gap-2">
                         <Link
                           href={`/admin/products/${product.id}/edit`}
-                          className="font-medium text-foreground hover:underline line-clamp-2"
+                          title={product.title}
+                          className="font-medium text-foreground hover:underline [overflow-wrap:anywhere]"
                         >
-                          {product.title}
+                          {shortenText(product.title)}
                         </Link>
                       </div>
 
@@ -449,7 +455,7 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                   </TableCell>
 
                   {/* Category & Brand */}
-                  <TableCell>
+                  <TableCell className="whitespace-normal [overflow-wrap:anywhere]">
                     <div className="space-y-1">
                       <div className="text-xs font-medium text-foreground">{product.brand.name}</div>
                       <div className="text-xs text-muted-foreground">{product.category.name}</div>
