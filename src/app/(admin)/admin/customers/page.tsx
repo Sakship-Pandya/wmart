@@ -79,14 +79,14 @@ async function CustomersContent({ searchParams }: { searchParams: SearchParams }
             ) : (
               data.customers.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell>
-                    <Link href={`/admin/customers/${c.id}`} className="font-medium text-primary hover:underline">
+                  <TableCell className="whitespace-normal">
+                    <Link href={`/admin/customers/${c.id}`} className="block max-w-[16rem] font-medium text-primary hover:underline [overflow-wrap:anywhere]">
                       {c.name}
                     </Link>
-                    <p className="text-xs text-muted-foreground">{c.email}</p>
+                    <p className="max-w-[16rem] text-xs text-muted-foreground [overflow-wrap:anywhere]">{c.email}</p>
                   </TableCell>
                   <TableCell className="text-sm">{c.phone ?? "—"}</TableCell>
-                  <TableCell className="text-sm">{c.location || "—"}</TableCell>
+                  <TableCell className="whitespace-normal text-sm">{c.location || "—"}</TableCell>
                   <TableCell className="text-right">{c.orderCount}</TableCell>
                   <TableCell className="text-right font-semibold">{formatPrice(c.totalSpent)}</TableCell>
                   <TableCell className="whitespace-nowrap text-xs text-muted-foreground">

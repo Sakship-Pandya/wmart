@@ -9,6 +9,7 @@ import { StatusPill } from "@/components/admin/shared/status-pill";
 import { OrderNoteForm, OrderStatusForm, PaymentStatusForm, ShipmentForm } from "@/components/admin/orders/order-actions";
 import { getAdminOrder, type AdminOrderDetail } from "@/server/queries/admin/orders";
 import { formatPrice } from "@/lib/format";
+import { shortenText } from "@/lib/text";
 import { delhiveryAwbUrl } from "@/lib/site";
 import {
   allowedNextStatuses,
@@ -77,11 +78,11 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       {item.productId ? (
-                        <Link href={`/admin/products/${item.productId}/edit`} className="line-clamp-2 text-sm font-medium hover:underline">
-                          {item.title}
+                        <Link href={`/admin/products/${item.productId}/edit`} title={item.title} className="line-clamp-2 text-sm font-medium hover:underline [overflow-wrap:anywhere]">
+                          {shortenText(item.title)}
                         </Link>
                       ) : (
-                        <p className="line-clamp-2 text-sm font-medium">{item.title} <span className="text-muted-foreground">(deleted)</span></p>
+                        <p title={item.title} className="line-clamp-2 text-sm font-medium [overflow-wrap:anywhere]">{shortenText(item.title)} <span className="text-muted-foreground">(deleted)</span></p>
                       )}
                       <p className="text-xs text-muted-foreground">
                         {formatPrice(item.unitPrice)} × {item.quantity}

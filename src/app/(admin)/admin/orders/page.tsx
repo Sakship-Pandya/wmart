@@ -138,8 +138,8 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
                     </p>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{formatDateTimeIST(o.createdAt)}</TableCell>
-                  <TableCell>
-                    <p className="font-medium">{o.customerName}</p>
+                  <TableCell className="whitespace-normal">
+                    <p className="max-w-[14rem] font-medium [overflow-wrap:anywhere]">{o.customerName}</p>
                     <p className="text-xs text-muted-foreground">
                       {o.city}
                       {!o.customerId && " · Guest"}
