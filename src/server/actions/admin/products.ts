@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { adminProductWhere, type ProductStatusFilter } from "@/lib/admin-product-filter";
 import { productSchema, generateSlug, type ProductFormValues } from "@/lib/validations/product";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -283,32 +284,11 @@ export interface AdminProductFilterCriteria {
   q?: string;
   brand?: string;
   category?: string;
-  status?: "all" | "active" | "inactive" | "out-of-stock" | "in-stock";
+  status?: ProductStatusFilter;
 }
 
 function buildAdminProductFilterWhere(filters?: AdminProductFilterCriteria): Prisma.ProductWhereInput {
-  if (!filters) return {};
-  const { q, brand, category, status = "all" } = filters;
-  const trimmed = q?.trim();
-
-  return {
-    ...(trimmed
-      ? {
-          OR: [
-            { title: { contains: trimmed, mode: "insensitive" } },
-            { slug: { contains: trimmed, mode: "insensitive" } },
-            { partNumbers: { some: { code: { contains: trimmed, mode: "insensitive" } } } },
-            { compatibleWith: { some: { name: { contains: trimmed, mode: "insensitive" } } } },
-          ],
-        }
-      : {}),
-    ...(brand ? { brand: { slug: brand } } : {}),
-    ...(category ? { category: { slug: category } } : {}),
-    ...(status === "active" ? { isActive: true } : {}),
-    ...(status === "inactive" ? { isActive: false } : {}),
-    ...(status === "out-of-stock" ? { stock: { lte: 0 } } : {}),
-    ...(status === "in-stock" ? { stock: { gt: 0 } } : {}),
-  };
+  return filters ? adminProductWhere(filters) : {};
 }
 
 export async function deleteAllFilteredProducts(filters?: AdminProductFilterCriteria) {
