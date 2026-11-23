@@ -1,36 +1,42 @@
 import { Suspense } from "react";
-import { ProductGrid, ProductGridSkeleton } from "@/components/shop/product-grid";
 import { NoProducts } from "@/components/shop/no-products";
-import { getBrandBySlug, listProductsByBrand } from "@/server/queries/products";
+import { ProductListing, ProductListingSkeleton } from "@/components/shop/listing/product-listing";
+import { getBrandBySlug } from "@/server/queries/products";
 import { titleFromSlug } from "@/lib/site";
 
-// Brand page, e.g. /brand/dell
+// Brand page, e.g. /brand/dell – filters, sorting and pages like the old site.
 // If the brand has no products or is not in the database yet, a friendly message is shown instead of a 404.
-export default function BrandPage({ params }: PageProps<"/brand/[slug]">) {
+export default function BrandPage({ params, searchParams }: PageProps<"/brand/[slug]">) {
   return (
-    <Suspense fallback={<ProductGridSkeleton />}>
-      <BrandContent params={params} />
+    <Suspense fallback={<ProductListingSkeleton />}>
+      <BrandContent params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function BrandContent({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+async function BrandContent({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   const brand = await getBrandBySlug(slug);
   const name = brand?.name ?? titleFromSlug(slug).toUpperCase();
-  const products = brand ? await listProductsByBrand(slug) : [];
   return (
-    <>
-      <h1 className="mb-6 text-2xl font-bold">{name} laptop batteries &amp; adapters</h1>
-      <ProductGrid
-        products={products}
-        empty={
-          <NoProducts
-            title={`No ${name} products yet`}
-            message={`We're adding ${name} batteries and adapters. Search by your laptop model or part number, or browse a category.`}
-          />
-        }
-      />
-    </>
+    <ProductListing
+      pathname={`/brand/${slug}`}
+      scope={{ brandSlug: slug }}
+      query={query}
+      title={<>{name} laptop batteries &amp; adapters</>}
+      crumbs={[{ label: "Home", href: "/" }, { label: "Shop", href: "/shop" }, { label: name }]}
+      empty={
+        <NoProducts
+          title={`No ${name} products yet`}
+          message={`We're adding ${name} batteries and adapters. Search by your laptop model or part number, or browse a category.`}
+        />
+      }
+    />
   );
 }

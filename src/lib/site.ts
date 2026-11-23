@@ -10,6 +10,36 @@ export const shopCategories = [
 // Same WhatsApp support number as the old site.
 export const whatsappUrl = "https://api.whatsapp.com/send?phone=917829225000&text=WMart%20Support";
 
+// Promo box shown on product pages (same offer as the old site).
+// NOTE: coupon codes are not connected at checkout yet – set `enabled: false` to hide it until they are.
+export const productPromo = {
+  enabled: true,
+  title: "Discounts Shopping Event",
+  text: "Get 10% discount on online payment – use promo code",
+  code: "ONLINE10",
+} as const;
+
+// Business details used in the policies, FAQ and product pages – change them here only.
+// Return window confirmed by the team: 10 days, as on wmart.co.in and the wmartstore.in FAQ
+// (only the old wmartstore.in refund-policy page said 7).
+export const business = {
+  legalName: "Worldmart Infocom",
+  returnWindowDays: 10,
+  warrantyMonthsOriginal: 12,
+  warrantyMonthsCompatible: 6,
+  supportHours: "Monday – Saturday, 10:00 AM – 7:00 PM",
+} as const;
+
+// "Why buy from us" points listed on every product page (from the old site).
+export const trustPoints = [
+  "Pan India delivery",
+  "100% tested",
+  "Secure payments",
+  "1 Lakh+ orders delivered",
+  `${business.returnWindowDays} days easy returns window`,
+  "Easy replacement within warranty",
+] as const;
+
 // Contact details from the old wmart.co.in footer.
 export const contact = {
   phoneDisplay: "+91 78292 25000",

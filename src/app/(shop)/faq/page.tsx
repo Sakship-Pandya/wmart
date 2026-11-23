@@ -4,7 +4,7 @@ import { ChevronDown, MessageCircle } from "lucide-react";
 import { PageHeader } from "@/components/shop/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { whatsappUrl } from "@/lib/site";
+import { business, whatsappUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Frequently asked questions",
@@ -52,8 +52,9 @@ const faqs: { q: string; a: React.ReactNode }[] = [
     q: "What is your refund and exchange policy?",
     a: (
       <>
-        If a product arrives damaged, defective or incompatible, request a return on WhatsApp within 10
-        days of delivery for a refund or replacement (after 10 days, replacement only). Please read our{" "}
+        If a product arrives damaged, defective or incompatible, request a return on WhatsApp within{" "}
+        {business.returnWindowDays} days of delivery for a refund or replacement (after that, replacement under
+        warranty). Please read our{" "}
         <Link href="/pages/refund-policy" className="font-medium text-brand hover:underline">
           Refund &amp; Exchange policy
         </Link>{" "}

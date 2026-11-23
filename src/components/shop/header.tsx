@@ -1,18 +1,30 @@
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import Link from "next/link";
-import { ShoppingCart, User } from "lucide-react";
+import { BadgePercent, LayoutGrid, Menu, User } from "lucide-react";
 import { getCartCount } from "@/server/queries/cart";
-import { listCategoriesWithProducts } from "@/server/queries/products";
-import { SearchBar } from "./search-bar";
+import { listBrandsWithProducts, listCategoriesWithProducts } from "@/server/queries/products";
+import { CategoriesMenu } from "./header/categories-menu";
+import { LiveSearch } from "./header/live-search";
+import { MiniCart } from "./header/mini-cart";
+import { MobileNav } from "./header/mobile-nav";
 
-// Orange bubble with the number of items in the cart (reads the cart cookie on each request).
+// Header like the old site: top bar with links, logo, Categories menu, live search,
+// Discounts, account and mini-cart; on phones a menu button and a bottom bar.
+
+/** Categories and brands that have products – loaded once per request even though two menus use them. */
+const getMenuData = cache(async () => {
+  const [categories, brands] = await Promise.all([listCategoriesWithProducts(20), listBrandsWithProducts(30)]);
+  return { categories, brands };
+});
+
+/** Orange bubble with the number of items in the cart (reads the cart cookie on each request). */
 async function CartCount() {
   const count = await getCartCount();
   return (
     <>
       <span className="sr-only">Cart, {count} {count === 1 ? "item" : "items"}</span>
       {count > 0 && (
-        <span aria-hidden className="absolute -top-0.5 -right-0.5 flex min-w-4.5 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold leading-4.5 text-brand-foreground">
+        <span aria-hidden className="absolute -top-1 -right-1 flex min-w-5 items-center justify-center rounded-full border-2 border-background bg-brand px-1 text-[10px] font-bold leading-4 text-brand-foreground">
           {count > 99 ? "99+" : count}
         </span>
       )}
@@ -20,48 +32,86 @@ async function CartCount() {
   );
 }
 
-// Menu of the categories that have products in the database (so the links always work).
-async function CategoryNav() {
-  const categories = await listCategoriesWithProducts(8);
+async function DesktopCategories() {
+  const { categories, brands } = await getMenuData();
+  return <CategoriesMenu categories={categories} brands={brands} />;
+}
+
+async function PhoneMenu() {
+  const { categories, brands } = await getMenuData();
   return (
-    <>
-      {categories.map((c) => (
-        <Link key={c.slug} href={`/c/${c.slug}`} className="whitespace-nowrap hover:text-brand">
-          {c.name}
-        </Link>
-      ))}
-    </>
+    <MobileNav
+      categories={categories}
+      brands={brands}
+      cartCount={
+        <Suspense fallback={null}>
+          <CartCount />
+        </Suspense>
+      }
+    />
   );
 }
 
 export function Header() {
   return (
     <header className="border-b bg-background">
-      <div className="bg-brand px-4 py-1.5 text-center text-xs font-medium text-brand-foreground">
-        Free shipping on all orders · Cash on Delivery · GST invoice
+      <div className="bg-brand text-brand-foreground">
+        <div className="mx-auto flex max-w-7xl items-center justify-center gap-6 px-4 py-1.5 text-xs font-medium sm:justify-between">
+          <p className="uppercase tracking-wide">Free shipping on all orders · Cash on Delivery</p>
+          <nav aria-label="Help" className="hidden gap-5 sm:flex">
+            <Link href="/track-order" className="hover:underline">Shipment Tracking</Link>
+            <Link href="/contact" className="hover:underline">Contact Us</Link>
+          </nav>
+        </div>
       </div>
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
-        <Link href="/" className="text-2xl font-bold tracking-tight text-heading">
+
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 lg:gap-4 lg:py-4">
+        <Suspense fallback={<span className="flex size-10 items-center justify-center lg:hidden"><Menu className="size-5" /></span>}>
+          <PhoneMenu />
+        </Suspense>
+
+        <Link href="/" className="mr-auto text-[28px] font-black tracking-tight text-heading lg:mr-0" aria-label="WMart home">
           W<span className="text-brand">Mart</span>
         </Link>
-        <div className="flex-1">
-          <SearchBar />
+
+        <div className="hidden lg:block">
+          <Suspense
+            fallback={
+              <span className="inline-flex h-11 items-center gap-2 rounded-full bg-heading px-5 text-sm font-semibold text-background">
+                <LayoutGrid className="size-4" /> Categories
+              </span>
+            }
+          >
+            <DesktopCategories />
+          </Suspense>
         </div>
-        <Link href="/account" aria-label="Account" className="p-2">
+
+        <LiveSearch className="hidden flex-1 lg:block" />
+
+        <Link
+          href="/shop?sort=discount"
+          className="hidden h-11 items-center gap-1.5 rounded-full border-2 border-brand px-5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-brand-foreground lg:inline-flex"
+        >
+          <BadgePercent className="size-4" /> Discounts
+        </Link>
+
+        <Link href="/account" aria-label="My account" className="hidden size-11 items-center justify-center rounded-full border transition hover:border-brand hover:text-brand sm:flex">
           <User className="size-5" />
         </Link>
-        <Link href="/cart" className="relative p-2">
-          <ShoppingCart className="size-5" aria-hidden />
-          <Suspense fallback={<span className="sr-only">Cart</span>}>
-            <CartCount />
-          </Suspense>
-        </Link>
+
+        <MiniCart
+          count={
+            <Suspense fallback={<span className="sr-only">Cart</span>}>
+              <CartCount />
+            </Suspense>
+          }
+        />
       </div>
-      <nav aria-label="Categories" className="mx-auto flex min-h-8 max-w-7xl gap-6 overflow-x-auto px-4 pb-3 text-sm">
-        <Suspense fallback={null}>
-          <CategoryNav />
-        </Suspense>
-      </nav>
+
+      {/* Phones and tablets: full-width search under the logo */}
+      <div className="px-4 pb-3 lg:hidden">
+        <LiveSearch />
+      </div>
     </header>
   );
 }

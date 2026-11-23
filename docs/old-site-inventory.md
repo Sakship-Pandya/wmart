@@ -62,6 +62,7 @@ Same layout for all three (`/shop`, `?product_cat=dell-batteries`, `?product_bra
 - MRP, sale price, "18% GST Included".
 - **Quantity selector** (− / +), **Add To Cart**, **Buy Now** (straight to checkout).
 - Trust list: Pan India delivery · 100% tested · Secure payments · 1 Lakh+ orders delivered · 10 days easy returns · Easy replacement within warranty · 10-day money-back guarantee.
+  - **New site:** the team confirmed a **10-day** return window, as on wmart.co.in and the wmartstore.in FAQ (only the wmartstore.in refund-policy page said 7). It is set once in `business.returnWindowDays` in `src/lib/site.ts`.
 - **Specification table**: HSN code, brand, GTIN, product name/part, warranty.
 - **Description**: compatible part numbers and compatible laptop models (long lists).
 - **Reviews**: list + "write a review" form (login required).

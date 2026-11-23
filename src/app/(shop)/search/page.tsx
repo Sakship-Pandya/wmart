@@ -1,46 +1,43 @@
 import { Suspense } from "react";
-import { ProductGrid, ProductGridSkeleton } from "@/components/shop/product-grid";
+import type { Metadata } from "next";
 import { NoProducts } from "@/components/shop/no-products";
-import { searchProducts } from "@/server/queries/products";
+import { ProductListing, ProductListingSkeleton } from "@/components/shop/listing/product-listing";
 
-// Search page: /search?q=HS04
+export const metadata: Metadata = { title: "Search", robots: { index: false, follow: true } };
+
+// Search page: /search?q=HS04 – matches titles, part numbers and laptop models, with the same filters as the shop.
 export default function SearchPage({ searchParams }: PageProps<"/search">) {
   return (
-    <Suspense fallback={<ProductGridSkeleton />}>
+    <Suspense fallback={<ProductListingSkeleton />}>
       <SearchResults searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function SearchResults({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const { q } = await searchParams;
-  const query = typeof q === "string" ? q : "";
-  const products = await searchProducts(query);
-  return (
-    <>
-      <h1 className="mb-6 text-2xl font-bold">
-        {query ? <>Results for &ldquo;{query}&rdquo;</> : "Search"}
-      </h1>
-      <ProductGrid
-        products={products}
-        empty={
-          query ? (
-            <NoProducts
-              title={`No results for “${query}”`}
-              message="Check the spelling, or try the part number printed on your old battery or charger (e.g. HS04, MR90Y) or your laptop model (e.g. Inspiron 3521)."
-            />
-          ) : (
-            <NoProducts
-              title="Search for a battery, adapter or cable"
-              message="Type your laptop model or the part number printed on your old battery or charger."
-            />
-          )
-        }
+async function SearchResults({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const query = await searchParams;
+  const q = typeof query.q === "string" ? query.q.trim() : "";
+  if (!q) {
+    return (
+      <NoProducts
+        title="Search for a battery, adapter or cable"
+        message="Type your laptop model or the part number printed on your old battery or charger."
       />
-    </>
+    );
+  }
+  return (
+    <ProductListing
+      pathname="/search"
+      scope={{ q }}
+      query={query}
+      title={<>Results for &ldquo;{q}&rdquo;</>}
+      crumbs={[{ label: "Home", href: "/" }, { label: "Search" }]}
+      empty={
+        <NoProducts
+          title={`No results for “${q}”`}
+          message="Check the spelling, or try the part number printed on your old battery or charger (e.g. HS04, MR90Y) or your laptop model (e.g. Inspiron 3521)."
+        />
+      }
+    />
   );
 }

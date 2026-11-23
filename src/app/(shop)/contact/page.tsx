@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { PageHeader } from "@/components/shop/page-header";
 import { ContactForm } from "@/components/shop/forms/contact-form";
-import { contact, whatsappUrl } from "@/lib/site";
+import { business, contact, whatsappUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact us",
@@ -68,7 +68,10 @@ export default function ContactPage() {
             </span>
           </a>
 
-          {/* TODO: add WMart's real support hours here. */}
+          <p className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
+            <Clock className="size-4 text-brand" />
+            Support hours: {business.supportHours}
+          </p>
         </div>
 
         <section aria-labelledby="contact-form-heading" className="rounded-2xl bg-muted p-6 sm:p-8">
