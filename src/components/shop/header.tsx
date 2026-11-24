@@ -70,15 +70,15 @@ export function Header() {
           <PhoneMenu />
         </Suspense>
 
-        <Link href="/" className="mr-auto text-[28px] font-black tracking-tight text-heading lg:mr-0" aria-label="WMart home">
+        <Link href="/" className="mr-auto text-[32px] sm:text-[35px] font-black tracking-tight leading-none text-heading lg:mr-0" aria-label="WMart home">
           W<span className="text-brand">Mart</span>
         </Link>
 
         <div className="hidden lg:block">
           <Suspense
             fallback={
-              <span className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-brand px-5 text-sm font-semibold text-brand">
-                <LayoutGrid className="size-4" /> Categories
+              <span className="inline-flex h-9.5 items-center gap-1.5 rounded-full border-2 border-brand px-4 text-sm font-semibold text-brand">
+                <LayoutGrid className="size-3.5" /> Categories
               </span>
             }
           >
@@ -90,9 +90,9 @@ export function Header() {
 
         <Link
           href="/shop?sort=discount"
-          className="hidden h-11 items-center gap-1.5 rounded-full border-2 border-brand px-5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-brand-foreground lg:inline-flex"
+          className="hidden h-9.5 items-center gap-1.5 rounded-full border-2 border-brand px-4 text-sm font-semibold text-brand transition hover:bg-brand hover:text-brand-foreground lg:inline-flex"
         >
-          <BadgePercent className="size-4" /> Discounts
+          <BadgePercent className="size-3.5" /> Discounts
         </Link>
 
         <Link href="/account" aria-label="My account" className="hidden size-11 items-center justify-center rounded-full border transition hover:border-brand hover:text-brand sm:flex">

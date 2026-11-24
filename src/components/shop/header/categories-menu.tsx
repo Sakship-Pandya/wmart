@@ -35,15 +35,15 @@ export function CategoriesMenu({ categories, brands }: { categories: MenuItem[];
         aria-expanded={open}
         aria-controls="categories-menu"
         className={cn(
-          "inline-flex h-11 items-center gap-2 rounded-full border-2 border-brand px-5 text-sm font-semibold transition cursor-pointer",
+          "inline-flex h-9.5 items-center gap-1.5 rounded-full border-2 border-brand px-4 text-sm font-semibold transition cursor-pointer",
           open
             ? "bg-brand text-brand-foreground shadow-sm"
             : "text-brand hover:bg-brand hover:text-brand-foreground"
         )}
       >
-        <LayoutGrid className="size-4" />
+        <LayoutGrid className="size-3.5" />
         Categories
-        <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
       </button>
 
       {open && (
