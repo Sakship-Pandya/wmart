@@ -7,19 +7,23 @@ import { ProductGrid, ProductGridSkeleton } from "@/components/shop/product-grid
 import { NoProducts } from "@/components/shop/no-products";
 import { SearchBar } from "@/components/shop/search-bar";
 import { ProductTabs, type ProductTab } from "@/components/shop/home/product-tabs";
+import { HeroCarousel } from "@/components/shop/home/hero-carousel";
 import {
   listBestDeals,
   listBrandsWithProducts,
   listCategoriesWithProducts,
+  listHeroDealSlides,
   listLatestProducts,
   listProductsInCategory,
+  type HeroDealSlide,
 } from "@/server/queries/products";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { business } from "@/lib/site";
+import { discountPercent, formatPrice } from "@/lib/format";
 
-// Home page. Categories, brands and products come from the database, so they always match
-// whatever the admin panel / CSV import created.
-// TODO (store UI): hero slider with several banners (needs banner images + an admin screen for them).
+// Home page. Categories, brands, products and the hero deal slides come from the database,
+// so they always match whatever the admin panel / CSV import created.
 
 const trust = [
   { icon: Truck, title: "Free shipping", text: "On every order, across India" },
@@ -32,30 +36,13 @@ const trust = [
 export default function HomePage() {
   return (
     <div className="space-y-14">
-      <section className="relative overflow-hidden rounded-3xl bg-heading px-6 py-12 text-background sm:px-12 sm:py-16">
-        <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-brand/30 blur-3xl" />
-        <div className="relative max-w-2xl space-y-5">
-          <p className="inline-flex rounded-full bg-brand px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-foreground">
-            Genuine &amp; tested parts
-          </p>
-          <h1 className="text-3xl font-bold leading-tight text-background sm:text-5xl">
-            Shop great deals on laptop batteries, adapters and more.
-          </h1>
-          <p className="text-base text-background/75 sm:text-lg">
-            For HP, Dell, Lenovo, Asus, Acer, Apple and more – with GST invoice, Cash on Delivery and free shipping across India.
-          </p>
-          <div className="max-w-lg text-heading">
-            <SearchBar />
-          </div>
-          <Suspense fallback={<Skeleton className="h-11 w-72 rounded-full bg-background/20" />}>
-            <HeroButtons />
-          </Suspense>
-        </div>
-      </section>
+      <Suspense fallback={<WelcomeSlide buttons={<Skeleton className="h-11 w-72 rounded-full bg-background/20" />} />}>
+        <HomeHero />
+      </Suspense>
 
       <section aria-label="Why shop with WMart" className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         {trust.map((t) => (
-          <div key={t.title} className="flex items-center gap-3 rounded-2xl bg-muted p-4">
+          <div key={t.title} className="flex items-center gap-3 rounded-2xl bg-brand/10 p-4">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-brand">
               <t.icon className="size-5" />
             </span>
@@ -91,8 +78,103 @@ export default function HomePage() {
   );
 }
 
-async function HeroButtons() {
-  const top = await listCategoriesWithProducts(2);
+/** Rotating hero: the welcome slide, then one slide per category with real discounts (live data). */
+async function HomeHero() {
+  const [deals, top] = await Promise.all([listHeroDealSlides(4), listCategoriesWithProducts(2)]);
+  return (
+    <HeroCarousel labels={["Welcome to WMart", ...deals.map((d) => `${d.category.name} – up to ${d.maxDiscount}% off`)]}>
+      <WelcomeSlide buttons={<HeroButtons top={top} />} />
+      {deals.map((d) => (
+        <DealSlide key={d.category.slug} deal={d} />
+      ))}
+    </HeroCarousel>
+  );
+}
+
+const slideBox = "relative flex h-full flex-col justify-center overflow-hidden rounded-3xl bg-heading px-6 py-9 text-background sm:px-10 sm:py-11";
+
+function WelcomeSlide({ buttons }: { buttons: React.ReactNode }) {
+  return (
+    <div className={slideBox}>
+      <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-brand/30 blur-3xl" />
+      <div className="relative max-w-2xl space-y-4">
+        <p className="inline-flex rounded-full bg-brand px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-foreground">
+          Genuine &amp; tested parts
+        </p>
+        <h1 className="text-2xl font-bold leading-tight text-background sm:text-4xl">
+          Shop great deals on laptop batteries, adapters and more.
+        </h1>
+        <p className="text-sm text-background/75 sm:text-base">
+          For HP, Dell, Lenovo, Asus, Acer, Apple and more – with GST invoice, Cash on Delivery and free shipping across India.
+        </p>
+        <div className="max-w-lg text-heading">
+          <SearchBar />
+        </div>
+        {buttons}
+      </div>
+    </div>
+  );
+}
+
+function DealSlide({ deal }: { deal: HeroDealSlide }) {
+  const brands = deal.brands.slice(0, 3).join(", ") + (deal.brands.length > 3 ? " & more" : "");
+  const productOff = discountPercent(deal.product.mrp, deal.product.price);
+  return (
+    <div className={slideBox}>
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-96 rounded-full bg-brand/25 blur-3xl" />
+      <div className="relative grid items-center gap-8 lg:grid-cols-[1.3fr_1fr]">
+        <div className="space-y-4">
+          <p className="inline-flex rounded-full bg-brand px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-foreground">
+            Up to {deal.maxDiscount}% off
+          </p>
+          <h2 className="text-2xl font-bold leading-tight text-background sm:text-4xl">{deal.category.name} on sale</h2>
+          <p className="text-sm text-background/75 sm:text-base">
+            {deal.onSale} {deal.onSale === 1 ? "product" : "products"} on sale, from {formatPrice(deal.fromPrice)} – {brands}. 18% GST
+            included, free shipping and Cash on Delivery.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/c/${deal.category.slug}?sort=discount`}
+              className={cn(buttonVariants(), "h-11 rounded-full bg-brand px-6 text-base font-semibold text-brand-foreground hover:bg-brand/85")}
+            >
+              Shop the deals <ArrowRight data-icon="inline-end" />
+            </Link>
+            <Link
+              href={`/c/${deal.category.slug}`}
+              className={cn(buttonVariants(), "h-11 rounded-full bg-background px-6 text-base font-semibold text-heading hover:bg-background/85")}
+            >
+              All {deal.category.name}
+            </Link>
+          </div>
+        </div>
+
+        <Link
+          href={`/p/${deal.product.slug}`}
+          className="group hidden w-full max-w-sm items-center gap-4 justify-self-end rounded-2xl bg-background p-4 text-heading shadow-xl transition hover:-translate-y-0.5 md:flex lg:flex-col lg:items-stretch"
+        >
+          <div className="relative aspect-square w-28 shrink-0 overflow-hidden rounded-xl bg-muted lg:aspect-auto lg:h-32 lg:w-full">
+            {deal.product.image && (
+              <Image src={deal.product.image} alt="" fill sizes="(min-width: 1024px) 360px, 112px" className="object-contain p-3 transition group-hover:scale-105" />
+            )}
+            {productOff > 0 && (
+              <span className="absolute top-2 left-2 rounded-full bg-sale-badge px-2 py-0.5 text-xs font-bold text-background">-{productOff}%</span>
+            )}
+          </div>
+          <div className="min-w-0 space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand">Biggest discount</p>
+            <p className="line-clamp-2 font-semibold group-hover:text-brand">{deal.product.title}</p>
+            <p>
+              <span className="text-lg font-bold text-brand">{formatPrice(deal.product.price)}</span>
+              <span className="ml-2 text-sm text-muted-foreground line-through">{formatPrice(deal.product.mrp)}</span>
+            </p>
+          </div>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function HeroButtons({ top }: { top: { name: string; slug: string }[] }) {
   return (
     <div className="flex flex-wrap gap-3">
       {top.map((c, i) => (

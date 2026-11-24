@@ -73,15 +73,17 @@ async function CheckoutContents() {
         </div>
         <ul className="space-y-3">
           {cart.lines.map((line) => (
-            <li key={line.productId} className="flex gap-3">
-              <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-background">
-                {line.image && <Image src={line.image.url} alt={line.image.alt ?? line.title} fill sizes="56px" className="object-contain p-1" />}
-                <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-heading text-[10px] font-bold text-background">
+            <li key={line.productId} className="flex items-center gap-3.5">
+              <div className="relative size-20 shrink-0">
+                <div className="relative size-full overflow-hidden rounded-xl border border-border/40 bg-background">
+                  {line.image && <Image src={line.image.url} alt={line.image.alt ?? line.title} fill sizes="80px" className="object-contain p-1.5" />}
+                </div>
+                <span className="absolute -top-1.5 -right-1.5 z-10 flex size-5 items-center justify-center rounded-full bg-heading text-[10px] font-bold text-background shadow-sm">
                   {line.quantity}
                 </span>
               </div>
-              <p className="line-clamp-2 flex-1 text-sm text-heading">{line.title}</p>
-              <p className="text-sm font-semibold text-heading">{formatPrice(line.lineTotal)}</p>
+              <p className="line-clamp-3 flex-1 text-sm font-medium text-heading leading-snug">{line.title}</p>
+              <p className="shrink-0 text-sm font-semibold text-heading">{formatPrice(line.lineTotal)}</p>
             </li>
           ))}
         </ul>

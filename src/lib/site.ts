@@ -7,8 +7,20 @@ export const shopCategories = [
   { href: "/c/accessories", label: "Accessories" },
 ] as const;
 
-// Same WhatsApp support number as the old site.
-export const whatsappUrl = "https://api.whatsapp.com/send?phone=917829225000&text=WMart%20Support";
+// Same WhatsApp support number as the old site. The chat opens with a ready-to-send message
+// that asks for what the team needs to check compatibility, so customers only fill in the blanks.
+const WHATSAPP_NUMBER = "917829225000";
+export const whatsappMessage = [
+  "Hi WMart! 👋 I need help finding the right part for my laptop.",
+  "",
+  "Laptop brand & model: ",
+  "Part number (on the old battery/charger, if available): ",
+  "I'm looking for: battery / adapter / other",
+].join("\n");
+export function whatsappLink(message: string = whatsappMessage) {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+export const whatsappUrl = whatsappLink();
 
 // Promo box shown on product pages (same offer as the old site).
 // NOTE: coupon codes are not connected at checkout yet – set `enabled: false` to hide it until they are.

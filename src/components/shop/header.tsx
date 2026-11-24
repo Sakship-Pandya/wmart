@@ -77,7 +77,7 @@ export function Header() {
         <div className="hidden lg:block">
           <Suspense
             fallback={
-              <span className="inline-flex h-11 items-center gap-2 rounded-full bg-heading px-5 text-sm font-semibold text-background">
+              <span className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-brand px-5 text-sm font-semibold text-brand">
                 <LayoutGrid className="size-4" /> Categories
               </span>
             }

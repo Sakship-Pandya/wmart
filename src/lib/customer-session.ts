@@ -105,7 +105,12 @@ export function customerName(c: Pick<CurrentCustomer, "displayName" | "firstName
   return c.displayName || c.firstName || c.email.split("@")[0];
 }
 
-/** Only allow redirects back into this site (e.g. "/account/orders"), never to another website. */
-export function safeNext(next: unknown, fallback = "/account"): string {
-  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : fallback;
+/** Only allow redirects back into this site (e.g. "/checkout"), never to another website. */
+export function safeNext(next: unknown, fallback = "/"): string {
+  if (typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\")) {
+    // If next points to /account, redirect to home page "/" as requested
+    if (next === "/account") return fallback;
+    return next;
+  }
+  return fallback;
 }

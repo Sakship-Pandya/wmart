@@ -12,7 +12,6 @@ import { PrismaClient } from "@/generated/prisma/client";
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
   pgPool?: Pool;
-  prismaClass?: typeof PrismaClient;
   prismaUrl?: string;
 };
 
@@ -33,15 +32,27 @@ function getClient(): PrismaClient {
   const connectionString = getConnectionString();
   if (process.env.NODE_ENV === "production") return createClient(connectionString).client;
 
-  const cached = globalForPrisma.prisma;
-  if (cached && globalForPrisma.prismaClass === PrismaClient && globalForPrisma.prismaUrl === connectionString) {
-    return cached;
+  // In development, reuse the existing client as long as DATABASE_URL hasn't changed.
+  if (globalForPrisma.prisma && globalForPrisma.prismaUrl === connectionString) {
+    return globalForPrisma.prisma;
   }
-  // Stale (regenerated client or new database): close the old connections and start fresh.
-  void globalForPrisma.pgPool?.end().catch(() => {});
+
   const { pool, client } = createClient(connectionString);
-  Object.assign(globalForPrisma, { prisma: client, pgPool: pool, prismaClass: PrismaClient, prismaUrl: connectionString });
+  globalForPrisma.prisma = client;
+  globalForPrisma.pgPool = pool;
+  globalForPrisma.prismaUrl = connectionString;
   return client;
 }
 
-export const db = getClient();
+// Proxy ensures any file importing `db` always accesses the active global client,
+// preventing stale instances across Next.js Turbopack HMR reloads.
+export const db = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getClient();
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof value === "function") {
+      return value.bind(client);
+    }
+    return value;
+  },
+});
