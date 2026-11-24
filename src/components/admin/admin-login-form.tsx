@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { loginAdminAction } from "@/server/actions/admin/auth";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export function AdminLoginForm() {
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +25,8 @@ export function AdminLoginForm() {
           setError(result.error);
         }
       } catch (err: unknown) {
-        // Next.js redirect throws a NEXT_REDIRECT error which is expected
-        if (err && typeof err === "object" && "digest" in err) {
+        // Next.js redirect throws a NEXT_REDIRECT error which must be re-thrown
+        if (isRedirectError(err)) {
           throw err;
         }
         setError("An unexpected error occurred. Please try again.");
