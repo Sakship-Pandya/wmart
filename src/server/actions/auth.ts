@@ -48,7 +48,7 @@ export async function login(_prev: AuthFormState, formData: FormData): Promise<A
 
   clearAttempts(`login:email:${email}`);
   await createCustomerSession(customer, rememberMe);
-  redirect(safeNext(formData.get("next")));
+  redirect(safeNext(formData.get("next"), "/"));
 }
 
 export async function register(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -87,7 +87,7 @@ export async function register(_prev: AuthFormState, formData: FormData): Promis
     select: { id: true, passwordHash: true },
   });
   await createCustomerSession(customer, true);
-  redirect(safeNext(formData.get("next")));
+  redirect(safeNext(formData.get("next"), "/"));
 }
 
 export async function logout(): Promise<void> {

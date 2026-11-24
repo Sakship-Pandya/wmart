@@ -29,7 +29,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
 
 async function LoginContent({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { next } = await searchParams;
-  const target = safeNext(next);
+  const target = safeNext(next, "/");
   if (await getCurrentCustomer()) redirect(target);
-  return <AuthCard next={target} />;
+  return <AuthCard next={target === "/" ? undefined : target} />;
 }

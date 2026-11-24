@@ -101,6 +101,61 @@ export async function listBestDeals(take = 8) {
   return ids.map((id) => items.find((p) => p.id === id)!).filter(Boolean);
 }
 
+export type HeroDealSlide = {
+  category: { name: string; slug: string };
+  maxDiscount: number; // percent
+  onSale: number; // in-stock products with a discount
+  fromPrice: number; // paise, cheapest in-stock product in the category
+  brands: string[]; // brands with discounted products, most first
+  product: { title: string; slug: string; price: number; mrp: number; image: string | null };
+};
+
+/**
+ * Home page carousel: one slide per category that has discounted, in-stock products,
+ * with its biggest real discount (MRP vs price) and that product. Coupons are not used
+ * here because they can't be applied at checkout yet.
+ */
+export async function listHeroDealSlides(take = 4): Promise<HeroDealSlide[]> {
+  await connection();
+  const rows = await db.product.findMany({
+    where: { isActive: true, stock: { gt: 0 } },
+    select: {
+      title: true,
+      slug: true,
+      price: true,
+      mrp: true,
+      brand: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
+      images: { select: { url: true }, orderBy: { position: "asc" }, take: 1 },
+    },
+  });
+
+  const pct = (p: { mrp: number; price: number }) => (p.mrp > p.price ? (p.mrp - p.price) / p.mrp : 0);
+  const byCategory = new Map<string, typeof rows>();
+  for (const r of rows) byCategory.set(r.category.slug, [...(byCategory.get(r.category.slug) ?? []), r]);
+
+  const slides: HeroDealSlide[] = [];
+  for (const items of byCategory.values()) {
+    const discounted = items.filter((p) => p.mrp > p.price);
+    if (discounted.length === 0) continue;
+    // Best deal with a photo if possible, otherwise the best deal.
+    const sorted = [...discounted].sort((a, b) => pct(b) - pct(a));
+    const best = sorted.find((p) => p.images[0]) ?? sorted[0];
+    const brandCounts = new Map<string, number>();
+    for (const p of discounted) brandCounts.set(p.brand.name, (brandCounts.get(p.brand.name) ?? 0) + 1);
+    slides.push({
+      category: items[0].category,
+      maxDiscount: Math.floor(pct(sorted[0]) * 100),
+      onSale: discounted.length,
+      fromPrice: Math.min(...items.map((p) => p.price)),
+      brands: [...brandCounts.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n),
+      product: { title: best.title, slug: best.slug, price: best.price, mrp: best.mrp, image: best.images[0]?.url ?? null },
+    });
+  }
+  // Categories with the most products on sale first.
+  return slides.sort((a, b) => b.onSale - a.onSale).slice(0, take);
+}
+
 /** Top products of one category – used for the home page category rows. */
 export async function listProductsInCategory(categorySlug: string, take = 8) {
   await connection();
