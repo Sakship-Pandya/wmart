@@ -114,7 +114,7 @@ dell-65w-adapter,Dell 65W Laptop Charger,<p>Original charger</p>,Dell,Laptop Ada
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Upload className="size-4 text-primary" />
+            <Upload className="size-4 text-brand" />
             Upload Product CSV
           </CardTitle>
           <CardDescription>
@@ -123,7 +123,7 @@ dell-65w-adapter,Dell 65W Laptop Charger,<p>Original charger</p>,Dell,Laptop Ada
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center transition-colors hover:border-primary/50 bg-muted/10">
+          <div className="relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center transition-colors hover:border-brand/50 bg-muted/10">
             <input
               type="file"
               accept=".csv"
@@ -131,7 +131,7 @@ dell-65w-adapter,Dell 65W Laptop Charger,<p>Original charger</p>,Dell,Laptop Ada
               className="absolute inset-0 size-full cursor-pointer opacity-0"
               disabled={isPending}
             />
-            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand/10 text-brand mb-3">
               <FileText className="size-6" />
             </div>
             {file ? (
@@ -140,7 +140,7 @@ dell-65w-adapter,Dell 65W Laptop Charger,<p>Original charger</p>,Dell,Laptop Ada
                 <p className="text-xs text-muted-foreground">
                   {(file.size / 1024).toFixed(1)} KB &bull; ~{previewRowsCount} product rows detected
                 </p>
-                <p className="text-[11px] text-primary pt-1 font-medium">
+                <p className="text-[11px] text-brand pt-1 font-medium">
                   Click or drag another file to replace
                 </p>
               </div>
@@ -224,11 +224,11 @@ dell-65w-adapter,Dell 65W Laptop Charger,<p>Original charger</p>,Dell,Laptop Ada
 
       {/* Import Results Card */}
       {result && (
-        <Card className="border-primary/20 shadow-xs">
+        <Card className="border-brand/20 shadow-xs">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <CheckCircle2 className="size-5 text-emerald-600" />
+                <CheckCircle2 className="size-5 text-success" />
                 Import Summary
               </CardTitle>
               <Badge variant="outline" className="text-xs">
@@ -247,13 +247,13 @@ dell-65w-adapter,Dell 65W Laptop Charger,<p>Original charger</p>,Dell,Laptop Ada
                 <span className="text-xs text-muted-foreground block">Total Records</span>
                 <span className="text-xl font-bold">{result.totalParsed}</span>
               </div>
-              <div className="rounded-lg border bg-emerald-500/10 p-3">
-                <span className="text-xs text-emerald-600 font-medium block">Created New</span>
-                <span className="text-xl font-bold text-emerald-600">+{result.createdCount}</span>
+              <div className="rounded-lg border bg-success/10 p-3">
+                <span className="text-xs text-success font-medium block">Created New</span>
+                <span className="text-xl font-bold text-success">+{result.createdCount}</span>
               </div>
-              <div className="rounded-lg border bg-primary/10 p-3">
-                <span className="text-xs text-primary font-medium block">Updated</span>
-                <span className="text-xl font-bold text-primary">{result.updatedCount}</span>
+              <div className="rounded-lg border bg-brand/10 p-3">
+                <span className="text-xs text-brand font-medium block">Updated</span>
+                <span className="text-xl font-bold text-brand">{result.updatedCount}</span>
               </div>
               <div className="rounded-lg border bg-muted/20 p-3">
                 <span className="text-xs text-muted-foreground block">Skipped / Errors</span>

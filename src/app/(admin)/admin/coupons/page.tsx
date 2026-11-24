@@ -23,7 +23,7 @@ export default function AdminCouponsPage({ searchParams }: { searchParams: Searc
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <TicketPercent className="size-6 text-primary" />
+            <TicketPercent className="size-6 text-brand" />
             <h1 className="text-2xl font-bold tracking-tight">Coupons</h1>
           </div>
           <p className="text-sm text-muted-foreground">Discount codes customers can apply in the cart.</p>
@@ -63,7 +63,7 @@ async function CouponsContent({ searchParams }: { searchParams: SearchParams }) 
             aria-current={active === t.value ? "page" : undefined}
             className={cn(
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              active === t.value ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
+              active === t.value ? "border-heading bg-heading text-background" : "bg-card hover:bg-muted",
             )}
           >
             {t.label} <span className={cn("ml-1", active === t.value ? "opacity-80" : "text-muted-foreground")}>{t.count}</span>
@@ -91,14 +91,14 @@ async function CouponsContent({ searchParams }: { searchParams: SearchParams }) 
               <TableRow>
                 <TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
                   No coupons here yet.{" "}
-                  <Link href="/admin/coupons/new" className="text-primary hover:underline">Create one</Link>
+                  <Link href="/admin/coupons/new" className="text-brand hover:underline">Create one</Link>
                 </TableCell>
               </TableRow>
             ) : (
               coupons.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell>
-                    <Link href={`/admin/coupons/${c.id}/edit`} className="font-mono font-semibold text-primary hover:underline">
+                    <Link href={`/admin/coupons/${c.id}/edit`} className="font-mono font-semibold text-brand hover:underline">
                       {c.code}
                     </Link>
                   </TableCell>

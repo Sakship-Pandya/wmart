@@ -21,7 +21,7 @@ export default function AdminCustomersPage({ searchParams }: { searchParams: Sea
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Users className="size-6 text-primary" />
+            <Users className="size-6 text-brand" />
             <h1 className="text-2xl font-bold tracking-tight">Customers</h1>
           </div>
           <p className="text-sm text-muted-foreground">Everyone who has an account or has placed an order.</p>
@@ -92,7 +92,7 @@ async function CustomersContent({ searchParams }: { searchParams: SearchParams }
               data.customers.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="whitespace-normal">
-                    <Link href={`/admin/customers/${c.id}`} className="block max-w-[16rem] font-medium text-primary hover:underline [overflow-wrap:anywhere]">
+                    <Link href={`/admin/customers/${c.id}`} className="block max-w-[16rem] font-medium text-brand hover:underline [overflow-wrap:anywhere]">
                       {c.name}
                     </Link>
                     <p className="max-w-[16rem] text-xs text-muted-foreground [overflow-wrap:anywhere]">{c.email}</p>

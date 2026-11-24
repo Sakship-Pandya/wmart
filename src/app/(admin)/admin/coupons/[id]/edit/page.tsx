@@ -52,7 +52,7 @@ async function EditCouponContent({ params }: { params: Promise<{ id: string }> }
           <ul className="divide-y text-sm">
             {coupon.orders.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                <Link href={`/admin/orders/${o.id}`} className="font-semibold text-primary hover:underline">
+                <Link href={`/admin/orders/${o.id}`} className="font-semibold text-brand hover:underline">
                   {formatOrderNumber(o.orderNumber)}
                 </Link>
                 <span className="text-muted-foreground">{formatDateIST(o.createdAt)}</span>

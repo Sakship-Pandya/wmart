@@ -8,17 +8,18 @@ import { Field, FormMessage, TextInput, firstError } from "./form-parts";
 
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState(requestPasswordReset, initialAuthState);
-  const error = firstError(state, "username");
+  const error = firstError(state, "email");
   return (
     <form action={action} noValidate className="space-y-3.5">
       <FormMessage state={state} />
-      <Field id="reset-username" label="Username or email address" error={error}>
+      <Field id="reset-email" label="Email address" error={error}>
         <TextInput
-          id="reset-username"
-          name="username"
-          autoComplete="username"
+          id="reset-email"
+          name="email"
+          type="email"
+          autoComplete="email"
           required
-          defaultValue={state.values?.username}
+          defaultValue={state.values?.email}
           invalid={!!error}
         />
       </Field>

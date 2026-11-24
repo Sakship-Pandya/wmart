@@ -36,7 +36,7 @@ export default function AdminProductsPage({ searchParams }: ProductsPageProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Package className="size-6 text-primary" />
+            <Package className="size-6 text-brand" />
             <h1 className="text-2xl font-bold tracking-tight">Products</h1>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -114,11 +114,11 @@ async function ProductContent({
         </div>
         <div className="rounded-md border bg-card px-3 py-1.5 text-xs">
           <span className="text-muted-foreground">Active:</span>{" "}
-          <span className="font-semibold text-emerald-600">{filterOptions.stats.active}</span>
+          <span className="font-semibold text-success">{filterOptions.stats.active}</span>
         </div>
         <Link href="/admin/products?status=low-stock" className="rounded-md border bg-card px-3 py-1.5 text-xs hover:bg-muted" title={`1 to ${filterOptions.stats.lowStockThreshold} units left`}>
           <span className="text-muted-foreground">Low stock:</span>{" "}
-          <span className="font-semibold text-amber-600">{filterOptions.stats.lowStock}</span>
+          <span className="font-semibold text-brand">{filterOptions.stats.lowStock}</span>
         </Link>
         <Link href="/admin/products?status=out-of-stock" className="rounded-md border bg-card px-3 py-1.5 text-xs hover:bg-muted">
           <span className="text-muted-foreground">Out of stock:</span>{" "}

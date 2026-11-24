@@ -5,6 +5,7 @@ import { useSelectedLayoutSegment } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/shop/breadcrumbs";
 import { accountSections } from "./account-sections";
+import { logout } from "@/server/actions/auth";
 
 function useActiveSection() {
   const segment = useSelectedLayoutSegment();
@@ -50,10 +51,11 @@ export function AccountNav() {
           );
         })}
         <li>
-          {/* TODO: sign the customer out once customer login exists. */}
-          <Link href="/login" className="block rounded-xl px-4 py-2.5 font-medium text-heading hover:bg-accent">
-            Logout
-          </Link>
+          <form action={logout}>
+            <button type="submit" className="block w-full cursor-pointer rounded-xl px-4 py-2.5 text-left font-medium text-heading hover:bg-accent hover:text-destructive">
+              Logout
+            </button>
+          </form>
         </li>
       </ul>
     </nav>

@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
       </div>
       <section className="max-w-lg rounded-2xl border p-6 sm:p-8">
         <p className="mb-6 text-muted-foreground">
-          Lost your password? Please enter your username or email address. You will receive a link to
+          Lost your password? Please enter your email address. You will receive a link to
           create a new password via email.
         </p>
         <ForgotPasswordForm />

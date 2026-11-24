@@ -198,10 +198,10 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
     <div className="space-y-3">
       {/* Bulk Action Toolbar (appears when 1 or more items are selected) */}
       {isAnySelected && (
-        <div className="flex flex-col gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 transition-all">
+        <div className="flex flex-col gap-2 rounded-lg border border-brand/20 bg-brand/5 px-4 py-2.5 transition-all">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+              <span className="flex size-6 items-center justify-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">
                 {totalSelectedCount}
               </span>
               <span className="text-xs font-medium text-foreground">
@@ -268,12 +268,12 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
 
           {/* Cross-page Select All helper prompt (like Gmail / Shopify) */}
           {allOnPageSelected && !selectAllAcrossPages && effectiveTotal > products.length && (
-            <div className="flex items-center gap-2 border-t border-primary/10 pt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 border-t border-brand/10 pt-2 text-xs text-muted-foreground">
               <span>All {products.length} products on this page are selected.</span>
               <button
                 type="button"
                 onClick={handleSelectAllAcrossPages}
-                className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80 cursor-pointer"
+                className="font-semibold text-brand underline underline-offset-2 hover:text-brand/80 cursor-pointer"
               >
                 Select all {effectiveTotal} products {isFiltered ? "matching this filter" : "in your store"}
               </button>
@@ -305,10 +305,10 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                     }
                   >
                     {selectAllAcrossPages || allOnPageSelected ? (
-                      <CheckSquare className="size-4 text-primary" />
+                      <CheckSquare className="size-4 text-brand" />
                     ) : someOnPageSelected ? (
-                      <div className="size-4 rounded border-2 border-primary bg-primary/20 flex items-center justify-center">
-                        <div className="size-2 bg-primary rounded-xs" />
+                      <div className="size-4 rounded border-2 border-brand bg-brand/20 flex items-center justify-center">
+                        <div className="size-2 bg-brand rounded-xs" />
                       </div>
                     ) : (
                       <Square className="size-4 text-muted-foreground" />
@@ -333,7 +333,7 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                       {effectiveTotal > products.length && (
                         <DropdownMenuItem
                           onClick={handleSelectAllAcrossPages}
-                          className="cursor-pointer text-xs font-semibold text-primary"
+                          className="cursor-pointer text-xs font-semibold text-brand"
                         >
                           Select all {effectiveTotal} products
                         </DropdownMenuItem>
@@ -373,7 +373,7 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                 <TableRow
                   key={product.id}
                   className={`hover:bg-muted/30 transition-colors ${
-                    isSelected ? "bg-primary/5 hover:bg-primary/10" : ""
+                    isSelected ? "bg-brand/5 hover:bg-brand/10" : ""
                   }`}
                 >
                   {/* Row Checkbox */}
@@ -384,7 +384,7 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                       className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
                     >
                       {isSelected ? (
-                        <CheckSquare className="size-4 text-primary" />
+                        <CheckSquare className="size-4 text-brand" />
                       ) : (
                         <Square className="size-4 text-muted-foreground/60" />
                       )}
@@ -425,7 +425,7 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
 
                       <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         {product.isOriginal ? (
-                          <Badge variant="outline" className="text-[10px] py-0 h-4 border-primary/40 text-primary">
+                          <Badge variant="outline" className="text-[10px] py-0 h-4 border-brand/40 text-brand">
                             OEM Original
                           </Badge>
                         ) : (
@@ -472,7 +472,7 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <span className="line-through">{formatPrice(product.mrp)}</span>
                           {discount > 0 && (
-                            <span className="font-semibold text-emerald-600 dark:text-emerald-500">
+                            <span className="font-semibold text-success dark:text-success">
                               -{discount}%
                             </span>
                           )}
@@ -490,7 +490,7 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                     ) : product.stock <= 10 ? (
                       <Badge
                         variant="outline"
-                        className="border-amber-500/40 text-amber-600 bg-amber-50/50 dark:bg-amber-950/20 text-[11px]"
+                        className="border-brand/40 text-brand bg-brand/5  text-[11px]"
                       >
                         Low: {product.stock}
                       </Badge>
@@ -504,7 +504,7 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                   {/* Active / Draft Status */}
                   <TableCell>
                     {product.isActive ? (
-                      <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-medium">
+                      <Badge className="bg-success hover:bg-success text-white text-[11px] font-medium">
                         Active
                       </Badge>
                     ) : (

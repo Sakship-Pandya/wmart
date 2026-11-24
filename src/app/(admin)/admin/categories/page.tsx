@@ -14,7 +14,7 @@ export default function AdminCategoriesPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <Layers className="size-6 text-primary" />
+          <Layers className="size-6 text-brand" />
           <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
         </div>
         <p className="text-sm text-muted-foreground">

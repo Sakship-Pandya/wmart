@@ -36,7 +36,7 @@ export function AdminLoginForm() {
   return (
     <Card className="w-full max-w-sm shadow-md">
       <CardHeader className="space-y-1 text-center">
-        <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-brand/10 text-brand">
           <ShieldCheck className="size-6" />
         </div>
         <CardTitle className="text-xl font-bold">WMart Admin</CardTitle>
@@ -60,8 +60,8 @@ export function AdminLoginForm() {
               <Input
                 name="email"
                 type="email"
-                placeholder="admin@wmartstore.in"
-                defaultValue="admin@wmartstore.in"
+                placeholder="you@example.com"
+                autoComplete="username"
                 className="pl-9 text-sm"
                 required
                 autoFocus
@@ -81,14 +81,6 @@ export function AdminLoginForm() {
                 required
               />
             </div>
-          </div>
-
-          <div className="rounded-md bg-muted/60 p-2.5 text-[11px] text-muted-foreground">
-            <span className="font-semibold text-foreground">Tip:</span> Default dev password is{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-foreground font-semibold">
-              admin123
-            </code>{" "}
-            (configured via <code className="font-mono">ADMIN_PASSWORD</code> in <code className="font-mono">.env</code>).
           </div>
 
           <Button type="submit" className="w-full" disabled={isPending}>

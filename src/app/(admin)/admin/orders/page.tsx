@@ -31,7 +31,7 @@ export default function AdminOrdersPage({ searchParams }: { searchParams: Search
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <ShoppingBag className="size-6 text-primary" />
+            <ShoppingBag className="size-6 text-brand" />
             <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -77,7 +77,7 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
             aria-current={activeStatus === t.value ? "page" : undefined}
             className={cn(
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              activeStatus === t.value ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
+              activeStatus === t.value ? "border-heading bg-heading text-background" : "bg-card hover:bg-muted",
             )}
           >
             {t.label} <span className={cn("ml-1", activeStatus === t.value ? "opacity-80" : "text-muted-foreground")}>{t.count}</span>
@@ -130,7 +130,7 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
               data.orders.map((o) => (
                 <TableRow key={o.id} className="group">
                   <TableCell>
-                    <Link href={`/admin/orders/${o.id}`} className="font-semibold text-primary hover:underline">
+                    <Link href={`/admin/orders/${o.id}`} className="font-semibold text-brand hover:underline">
                       {formatOrderNumber(o.orderNumber)}
                     </Link>
                     <p className="text-xs text-muted-foreground">

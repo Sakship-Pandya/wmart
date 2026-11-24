@@ -153,7 +153,7 @@ export function CouponForm({ initial }: { initial?: CouponInitial }) {
           </div>
         </div>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="isActive" defaultChecked={initial?.isActive ?? true} className="size-4 accent-primary" />
+          <input type="checkbox" name="isActive" defaultChecked={initial?.isActive ?? true} className="size-4 accent-brand" />
           Active (customers can use it)
         </label>
       </section>

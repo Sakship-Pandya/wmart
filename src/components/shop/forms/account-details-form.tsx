@@ -7,11 +7,13 @@ import { updateAccountDetails } from "@/server/actions/forms";
 import { initialFormState } from "@/lib/validation/forms";
 
 // My account → Account details (same fields as the old site).
-// TODO: fill defaultValues from the signed-in customer once login exists.
-export function AccountDetailsForm() {
+// Starts with the signed-in customer's saved details; after saving it shows what was saved.
+export type AccountDetailsInitial = { firstName: string; lastName: string; displayName: string; email: string };
+
+export function AccountDetailsForm({ initial }: { initial: AccountDetailsInitial }) {
   const [state, action, pending] = useActionState(updateAccountDetails, initialFormState);
   const err = (f: string) => firstError(state, f);
-  const v = state.values;
+  const v = state.values ?? initial;
   return (
     <form action={action} noValidate className="max-w-2xl space-y-3.5">
       <FormMessage state={state} />
@@ -33,7 +35,7 @@ export function AccountDetailsForm() {
 
       <fieldset className="space-y-3.5 rounded-2xl border p-5">
         <legend className="px-2 font-semibold text-heading">Password change</legend>
-        <p className="text-sm text-muted-foreground">Leave these blank to keep your current password.</p>
+        <p className="text-sm text-muted-foreground">Leave these blank to keep your current password. Your current password is also needed to change your email address.</p>
         <Field id="current-password" label="Current password" optional error={err("currentPassword")}>
           <PasswordInput id="current-password" name="currentPassword" autoComplete="current-password" invalid={!!err("currentPassword")} />
         </Field>
