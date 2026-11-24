@@ -10,6 +10,7 @@ import { clearAttempts, tooManyAttempts } from "@/lib/rate-limit";
 // Admin sign-in. Access needs BOTH settings in .env – there are no built-in defaults:
 //   ADMIN_EMAILS         comma-separated list of admin email addresses
 //   ADMIN_PASSWORD_HASH  (recommended) made with: npx tsx scripts/hash-admin-password.ts "..."
+//                        paste the printed line as-is (each "$" written as "\$", see the script)
 //   or ADMIN_PASSWORD    the password itself (at least 12 characters in production)
 
 const WRONG = "Incorrect email or password.";
@@ -24,7 +25,10 @@ function adminEmails(): string[] {
 
 /** Checks the password against ADMIN_PASSWORD_HASH, or else ADMIN_PASSWORD (compared in constant time). */
 async function checkAdminPassword(password: string): Promise<boolean | "not-configured"> {
-  const hash = process.env.ADMIN_PASSWORD_HASH?.trim();
+  // In .env the hash is written with "\$" (Next.js would otherwise expand "$..." as variables);
+  // .env loading turns those back into "$". Values pasted into a hosting dashboard are not
+  // expanded, so remove any "\" left before "$" – the hash works written either way.
+  const hash = process.env.ADMIN_PASSWORD_HASH?.trim().replace(/\\\$/g, "$");
   if (hash) return verifyPassword(password, hash);
 
   const plain = process.env.ADMIN_PASSWORD ?? "";
