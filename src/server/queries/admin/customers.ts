@@ -15,12 +15,19 @@ const countedOrder: Prisma.OrderWhereInput = {
   paymentStatus: { not: "FAILED" },
 };
 
-export async function getAdminCustomers(params: AdminCustomerListParams = {}) {
-  await requireAdmin();
-  const { page = 1, pageSize = 20, sort = "newest" } = params;
+/**
+ * Every customer matching the Customers page search, with order totals, sorted.
+ * Shared by the Customers page (which paginates it) and the customers CSV export.
+ * No login check here: callers must check (getAdminCustomers / the export route).
+ * `from`/`to` filter by the date the customer joined.
+ */
+export async function listAdminCustomerRows(params: { q?: string; sort?: string; from?: Date; to?: Date } = {}) {
+  const { sort = "newest" } = params;
   const q = params.q?.trim();
 
-  const where: Prisma.CustomerWhereInput = q
+  const where: Prisma.CustomerWhereInput = {
+    ...(params.from || params.to ? { createdAt: { ...(params.from ? { gte: params.from } : {}), ...(params.to ? { lt: params.to } : {}) } } : {}),
+    ...(q
     ? {
         OR: [
           { email: { contains: q, mode: "insensitive" } },
@@ -30,7 +37,8 @@ export async function getAdminCustomers(params: AdminCustomerListParams = {}) {
           { addresses: { some: { OR: [{ city: { contains: q, mode: "insensitive" } }, { pincode: { contains: q } }] } } },
         ],
       }
-    : {};
+    : {}),
+  };
 
   // Totals are computed in the database for every matching customer, then sorted
   // and paginated in memory. Fine for thousands of customers; revisit beyond that.
@@ -78,6 +86,13 @@ export async function getAdminCustomers(params: AdminCustomerListParams = {}) {
     name: (a, b) => a.name.localeCompare(b.name),
   };
   rows.sort(sorters[sort] ?? sorters.newest);
+  return rows;
+}
+
+export async function getAdminCustomers(params: AdminCustomerListParams = {}) {
+  await requireAdmin();
+  const { page = 1, pageSize = 20 } = params;
+  const rows = await listAdminCustomerRows(params);
 
   const totalCount = rows.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));

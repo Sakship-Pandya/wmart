@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ListFilters } from "@/components/admin/shared/list-filters";
 import { ListPagination } from "@/components/admin/shared/list-pagination";
 import { StatusPill } from "@/components/admin/shared/status-pill";
+import { ExportMenu } from "@/components/admin/shared/export-menu";
 import { getAdminCustomers } from "@/server/queries/admin/customers";
 import { formatPrice } from "@/lib/format";
 import { formatDateIST } from "@/lib/orders";
@@ -17,12 +18,23 @@ type SearchParams = Promise<{ q?: string; sort?: string; page?: string }>;
 export default function AdminCustomersPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2">
-          <Users className="size-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Customers</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Users className="size-6 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight">Customers</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">Everyone who has an account or has placed an order.</p>
         </div>
-        <p className="text-sm text-muted-foreground">Everyone who has an account or has placed an order.</p>
+        <Suspense fallback={null}>
+          <ExportMenu
+            endpoint="/api/admin/export/customers"
+            carry={["q", "sort"]}
+            dateLabel="Joined between"
+            allLabel="All customers"
+            options={[{ label: "Customers (one row per customer)", primary: true }]}
+          />
+        </Suspense>
       </div>
       <Suspense fallback={<Skeleton className="h-96 rounded-lg" />}>
         <CustomersContent searchParams={searchParams} />

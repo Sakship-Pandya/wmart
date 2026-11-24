@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { assignInvoiceNumber } from "@/server/invoice-number";
 import type { OrderStatus, PaymentStatus, ShipmentStatus } from "@/generated/prisma/enums";
 import {
   PAYMENT_STATUSES,
@@ -62,6 +63,9 @@ export async function updateOrderStatus(orderId: string, next: OrderStatus, note
     });
     if (updated.count === 0) throw new Error("This order was changed by someone else. Reload the page and try again.");
 
+    // Confirming an order issues its GST invoice number (same transaction, so no gaps on failure).
+    const invoiceNumber = next === "CONFIRMED" ? await assignInvoiceNumber(tx, orderId, now) : null;
+
     if (restock) {
       for (const item of order.items) {
         if (item.productId) {
@@ -74,7 +78,10 @@ export async function updateOrderStatus(orderId: string, next: OrderStatus, note
       data: {
         orderId,
         type: `status:${next}`,
-        message: [message, restock ? "Items returned to stock." : null].filter(Boolean).join(" ") || null,
+        message:
+          [message, invoiceNumber ? `Invoice ${invoiceNumber} issued.` : null, restock ? "Items returned to stock." : null]
+            .filter(Boolean)
+            .join(" ") || null,
         actor: `admin:${session.email}`,
       },
     });
@@ -166,4 +173,25 @@ export async function addOrderNote(orderId: string, note: string) {
   await db.orderEvent.create({ data: { orderId, type: "note", message, actor: `admin:${session.email}` } });
   revalidateOrder(orderId, order.customerId);
   return { success: true };
+}
+
+/**
+ * Issues the GST invoice number for an order that is past "Pending" but has none yet
+ * (e.g. confirmed before invoices existed). Cancelled and pending orders get no invoice.
+ */
+export async function generateInvoice(orderId: string) {
+  const session = await requireAdmin();
+  const order = await db.order.findUnique({ where: { id: orderId }, select: { status: true, invoiceNumber: true, customerId: true } });
+  if (!order) throw new Error("Order not found");
+  if (order.invoiceNumber) return { success: true, invoiceNumber: order.invoiceNumber };
+  if (order.status === "PENDING" || order.status === "CANCELLED") {
+    throw new Error("Confirm the order first. Pending and cancelled orders don't get an invoice.");
+  }
+  const invoiceNumber = await db.$transaction(async (tx) => {
+    const number = await assignInvoiceNumber(tx, orderId);
+    await tx.orderEvent.create({ data: { orderId, type: "note", message: `Invoice ${number} issued.`, actor: `admin:${session.email}` } });
+    return number;
+  });
+  revalidateOrder(orderId, order.customerId);
+  return { success: true, invoiceNumber };
 }

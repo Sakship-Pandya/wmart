@@ -5,8 +5,9 @@
 import { db } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { buildAdminOrderWhere } from "@/server/queries/admin/orders";
-import { csvResponse, rupees, toCsv, todayIST } from "@/lib/csv";
+import { csvResponse, istDateRange, rupees, toCsv, todayIST } from "@/lib/csv";
 import {
+  allocateDiscount,
   asAddress,
   formatDateTimeIST,
   formatOrderNumber,
@@ -68,22 +69,13 @@ const ITEM_COLUMNS = [
   "igst",
 ] as const;
 
-/** "2026-11-01" -> midnight IST that day (as UTC). */
-function istDayStart(s: string | null): Date | undefined {
-  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
-  const d = new Date(`${s}T00:00:00+05:30`);
-  return Number.isNaN(d.getTime()) ? undefined : d;
-}
-
 export async function GET(request: Request) {
   if (!(await getAdminSession())) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const p = new URL(request.url).searchParams;
-  const from = istDayStart(p.get("from"));
-  const toStart = istDayStart(p.get("to"));
-  const to = toStart ? new Date(toStart.getTime() + 24 * 3600 * 1000) : undefined; // inclusive end day
+  const { from, to } = istDateRange(p); // IST days, end day inclusive
 
   const where = buildAdminOrderWhere({
     status: p.get("status") ?? undefined,
@@ -108,9 +100,9 @@ export async function GET(request: Request) {
   if (p.get("rows") === "items") {
     const rows = orders.flatMap((o) => {
       const ship = asAddress(o.shippingAddress);
-      const charged = o.subtotal - o.discount;
-      return o.items.map((i) => {
-        const after = o.subtotal > 0 ? Math.round((i.lineTotal / o.subtotal) * charged) : 0;
+      const shares = allocateDiscount(o.subtotal, o.discount, o.items.map((i) => i.lineTotal));
+      return o.items.map((i, index) => {
+        const after = shares[index];
         const tax = splitInclusivePrice(after, i.gstRate, o.intraState);
         return {
           order_number: formatOrderNumber(o.orderNumber),

@@ -37,3 +37,17 @@ export function rupees(paise: number | null | undefined): string {
 export function todayIST(): string {
   return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
 }
+
+/** "2026-11-01" -> midnight IST that day (as a UTC Date); invalid or empty -> undefined. */
+export function istDayStart(s: string | null): Date | undefined {
+  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
+  const d = new Date(`${s}T00:00:00+05:30`);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+/** Date range from ?from=&to= (IST days, both inclusive): { from, to } with `to` exclusive. */
+export function istDateRange(params: URLSearchParams): { from?: Date; to?: Date } {
+  const from = istDayStart(params.get("from"));
+  const toStart = istDayStart(params.get("to"));
+  return { from, to: toStart ? new Date(toStart.getTime() + 24 * 3600 * 1000) : undefined };
+}

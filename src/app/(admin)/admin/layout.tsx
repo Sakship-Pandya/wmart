@@ -35,7 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <AdminSidebar session={session} counts={counts} />
       {/* min-w-0 lets the content area shrink to the screen width; without it a wide
           table pushes the whole page sideways instead of scrolling inside its own box. */}
-      <main className="min-w-0 flex-1 bg-muted/30 p-6">
+      <main className="min-w-0 flex-1 bg-muted/30 p-6 print:bg-white print:p-0">
         <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
           <AdminGate>{children}</AdminGate>
         </Suspense>

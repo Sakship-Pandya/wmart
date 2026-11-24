@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { GenerateInvoiceButton } from "@/components/admin/orders/invoice-buttons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/admin/shared/status-pill";
@@ -55,6 +57,16 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
           <h1 className="text-2xl font-bold tracking-tight">Order {formatOrderNumber(order.orderNumber)}</h1>
           <StatusPill tone={orderStatusInfo[order.status].tone} label={orderStatusInfo[order.status].label} />
           <StatusPill tone={paymentStatusInfo[order.paymentStatus].tone} label={paymentStatusInfo[order.paymentStatus].label} />
+          <div className="ml-auto">
+            {order.invoiceNumber ? (
+              <Link href={`/admin/orders/${order.id}/invoice`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                <FileText className="mr-1.5 size-4" />
+                Invoice {order.invoiceNumber}
+              </Link>
+            ) : (
+              order.status !== "PENDING" && order.status !== "CANCELLED" && <GenerateInvoiceButton orderId={order.id} />
+            )}
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">
           Placed {formatDateTimeIST(order.createdAt)} · {paymentMethodLabel[order.paymentMethod]}
