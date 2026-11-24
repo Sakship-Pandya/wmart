@@ -1,28 +1,7 @@
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  Package,
-  Layers,
-  Tag,
-  ShoppingBag,
-  Upload,
-  Users,
-  TicketPercent,
-  LogOut,
-  Shield,
-} from "lucide-react";
+import { ExternalLink, LogOut, Shield } from "lucide-react";
 import type { AdminSession } from "@/lib/auth";
-
-const items = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/categories", label: "Categories", icon: Layers },
-  { href: "/admin/brands", label: "Brands", icon: Tag },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/coupons", label: "Coupons", icon: TicketPercent },
-  { href: "/admin/import", label: "Bulk import", icon: Upload },
-] as const;
+import { AdminNavLinks, type AdminNavBadge, type AdminNavHref } from "./admin-nav-links";
 
 export interface AdminNavCounts {
   ordersToProcess: number;
@@ -30,49 +9,40 @@ export interface AdminNavCounts {
 }
 
 export function AdminSidebar({ session, counts }: { session?: AdminSession | null; counts?: AdminNavCounts }) {
-  const badges: Partial<Record<(typeof items)[number]["href"], { value: number; label: string; tone: string }>> = counts
+  // Orange = orders waiting for you, yellow = products to restock (same colours as the store).
+  const badges: Partial<Record<AdminNavHref, AdminNavBadge>> = counts
     ? {
-        "/admin/orders": { value: counts.ordersToProcess, label: "orders to process", tone: "bg-primary text-primary-foreground" },
-        "/admin/products": { value: counts.needsRestock, label: "products need restocking", tone: "bg-amber-500 text-white" },
+        "/admin/orders": { value: counts.ordersToProcess, label: "orders to process", tone: "bg-brand text-brand-foreground" },
+        "/admin/products": { value: counts.needsRestock, label: "products need restocking", tone: "bg-star text-heading" },
       }
     : {};
+
   return (
-    <aside className="hidden w-56 shrink-0 border-r bg-background p-4 md:flex md:flex-col md:justify-between min-h-screen print:!hidden">
+    // print:!hidden – the sidebar is left out when printing a tax invoice.
+    <aside className="hidden min-h-screen w-60 shrink-0 border-r bg-background p-4 md:flex md:flex-col md:justify-between print:!hidden">
       <div>
-        <Link href="/admin" className="mb-6 block text-lg font-bold">
-          WMart Admin
+        <Link href="/admin" className="mb-7 flex items-center gap-2 px-2" aria-label="WMart admin dashboard">
+          <span className="text-[26px] font-black tracking-tight text-heading">
+            W<span className="text-brand">Mart</span>
+          </span>
+          <span className="rounded-full bg-heading px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-background">Admin</span>
         </Link>
-        <nav className="space-y-1">
-          {items.map(({ href, label, icon: Icon }) => {
-            const badge = badges[href];
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted"
-              >
-                <Icon className="size-4" />
-                <span className="flex-1">{label}</span>
-                {badge && badge.value > 0 && (
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${badge.tone}`} title={`${badge.value} ${badge.label}`}>
-                    {badge.value}
-                    <span className="sr-only"> {badge.label}</span>
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+        <AdminNavLinks badges={badges} />
       </div>
 
-      <div className="pt-4 border-t space-y-3">
+      <div className="space-y-3 border-t pt-4">
+        <Link href="/" target="_blank" className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-brand">
+          <ExternalLink className="size-3.5" />
+          View store
+        </Link>
+
         {session?.email && (
           <div className="flex items-center gap-2 px-1">
-            <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Shield className="size-3.5" />
+            <div className="flex size-8 items-center justify-center rounded-full bg-brand/10 text-brand">
+              <Shield className="size-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate">{session.email}</p>
+              <p className="truncate text-xs font-medium text-heading">{session.email}</p>
               <p className="text-[10px] text-muted-foreground">Admin</p>
             </div>
           </div>
@@ -81,7 +51,7 @@ export function AdminSidebar({ session, counts }: { session?: AdminSession | nul
         <form action="/api/auth/logout" method="POST">
           <button
             type="submit"
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive cursor-pointer transition-colors"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <LogOut className="size-3.5" />
             Sign Out

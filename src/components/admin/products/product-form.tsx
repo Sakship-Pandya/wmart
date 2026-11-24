@@ -321,10 +321,10 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
         {/* Main Column (2/3 width) */}
         <div className="space-y-6 lg:col-span-2">
           {/* Category & Brand (Classification) */}
-          <Card className="border-primary/20 shadow-xs">
+          <Card className="border-brand/20 shadow-xs">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Layers className="size-4 text-primary" />
+                <Layers className="size-4 text-brand" />
                 Product Classification
               </CardTitle>
               <CardDescription>
@@ -342,7 +342,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
                     <button
                       type="button"
                       onClick={() => setCategoryDialogOpen(true)}
-                      className="text-[11px] text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                      className="text-[11px] text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
                     >
                       <Plus className="size-3" />
                       New Category
@@ -371,7 +371,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
                     <button
                       type="button"
                       onClick={() => setBrandDialogOpen(true)}
-                      className="text-[11px] text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                      className="text-[11px] text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
                     >
                       <Plus className="size-3" />
                       New Brand
@@ -417,7 +417,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
                       onChange={() => setIsOriginal(true)}
                       className="size-4"
                     />
-                    <span className="font-semibold text-primary">OEM Original</span>
+                    <span className="font-semibold text-brand">OEM Original</span>
                   </label>
                 </div>
               </div>
@@ -428,7 +428,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Package className="size-4 text-primary" />
+                <Package className="size-4 text-brand" />
                 Product Details
               </CardTitle>
               <CardDescription>
@@ -467,7 +467,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <IndianRupee className="size-4 text-primary" />
+                <IndianRupee className="size-4 text-brand" />
                 Pricing & Inventory
               </CardTitle>
               <CardDescription>
@@ -503,7 +503,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
                       MRP (₹) <span className="text-destructive">*</span>
                     </label>
                     {discountPercent > 0 && (
-                      <span className="text-xs text-emerald-600 font-semibold">
+                      <span className="text-xs text-success font-semibold">
                         {discountPercent}% OFF
                       </span>
                     )}
@@ -551,7 +551,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
               {/* GST Notice Badge */}
               <div className="rounded-md bg-muted/60 p-2.5 flex items-center justify-between text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  <CheckCircle2 className="size-3.5 text-success" />
                   <span>GST Rate: <strong>18% (Standard Electronics)</strong> applied automatically.</span>
                 </span>
               </div>
@@ -559,10 +559,10 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
           </Card>
 
           {/* Technical Specifications */}
-          <Card className="border-primary/20">
+          <Card className="border-brand/20">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Sliders className="size-4 text-primary" />
+                <Sliders className="size-4 text-brand" />
                 {currentSpecConfig.title}
               </CardTitle>
               <CardDescription>{currentSpecConfig.description}</CardDescription>
@@ -664,7 +664,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Laptop className="size-4 text-primary" />
+                <Laptop className="size-4 text-brand" />
                 Part Numbers & Laptop Compatibility
               </CardTitle>
               <CardDescription>
@@ -783,7 +783,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <ImageIcon className="size-4 text-primary" />
+                <ImageIcon className="size-4 text-brand" />
                 Product Images
               </CardTitle>
               <CardDescription>
@@ -826,7 +826,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
                         className="object-contain p-2"
                       />
                       {index === 0 && (
-                        <span className="absolute left-1.5 top-1.5 rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                        <span className="absolute left-1.5 top-1.5 rounded bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-brand-foreground">
                           Cover
                         </span>
                       )}
@@ -863,7 +863,7 @@ export function ProductForm({ initialData, brands, categories }: ProductFormProp
                   className="size-4"
                 />
                 <div>
-                  <span className="font-semibold text-xs text-emerald-600 block">Active (Published)</span>
+                  <span className="font-semibold text-xs text-success block">Active (Published)</span>
                   <span className="text-[11px] text-muted-foreground">Visible to customers in the store catalogue</span>
                 </div>
               </label>

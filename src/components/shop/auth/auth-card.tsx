@@ -33,7 +33,7 @@ const copy = {
  * The sentence under the form's button switches it; the new form slides in
  * (with reduced motion it just appears).
  */
-export function AuthCard() {
+export function AuthCard({ next }: { next?: string }) {
   const [mode, setMode] = useState<Mode>("login");
   // How many times the customer has switched. 0 = first page load (no animation, no focus move).
   // Also used as a key so the glow pulse replays once on every switch.
@@ -101,7 +101,7 @@ export function AuthCard() {
           <p className="mt-1 text-sm text-muted-foreground">{c.intro}</p>
         </div>
 
-        {mode === "login" ? <LoginForm /> : <RegisterForm />}
+        {mode === "login" ? <LoginForm next={next} /> : <RegisterForm next={next} />}
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
           {c.switchPrompt}{" "}

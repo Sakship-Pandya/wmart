@@ -7,22 +7,25 @@ import { login } from "@/server/actions/auth";
 import { initialAuthState } from "@/lib/validation/auth";
 import { Field, FormMessage, PasswordInput, TextInput, firstError } from "./form-parts";
 
-export function LoginForm() {
+/** `next` = page to return to after logging in (e.g. /checkout). */
+export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(login, initialAuthState);
-  const usernameError = firstError(state, "username");
+  const emailError = firstError(state, "email");
   const passwordError = firstError(state, "password");
 
   return (
     <form action={action} noValidate className="space-y-3.5">
       <FormMessage state={state} />
-      <Field id="login-username" label="Username or email address" error={usernameError}>
+      {next && <input type="hidden" name="next" value={next} />}
+      <Field id="login-email" label="Email address" error={emailError}>
         <TextInput
-          id="login-username"
-          name="username"
+          id="login-email"
+          name="email"
+          type="email"
           autoComplete="username"
           required
-          defaultValue={state.values?.username}
-          invalid={!!usernameError}
+          defaultValue={state.values?.email}
+          invalid={!!emailError}
         />
       </Field>
       <Field id="login-password" label="Password" error={passwordError}>

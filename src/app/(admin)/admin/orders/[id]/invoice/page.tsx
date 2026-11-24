@@ -69,7 +69,7 @@ async function InvoiceContent({ params }: { params: Promise<{ id: string }> }) {
       </div>
 
       {warnings.length > 0 && (
-        <ul className="space-y-1 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 print:hidden dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <ul className="space-y-1 rounded-xl border border-star/60 bg-star/15 p-3 text-sm text-heading print:hidden">
           {warnings.map((w) => (
             <li key={w} className="flex gap-2">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" />

@@ -14,7 +14,7 @@ export default function AdminBrandsPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <Tag className="size-6 text-primary" />
+          <Tag className="size-6 text-brand" />
           <h1 className="text-2xl font-bold tracking-tight">Brands</h1>
         </div>
         <p className="text-sm text-muted-foreground">

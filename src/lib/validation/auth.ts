@@ -1,9 +1,10 @@
 import { z } from "zod";
 
 // Customer login / register rules – shared by the forms and the server actions.
+// Customers sign in with their email address (the Customer table has no separate username).
 
 export const loginSchema = z.object({
-  username: z.string().trim().min(1, "Enter your username or email address."),
+  email: z.email("Enter a valid email address.").trim().toLowerCase(),
   password: z.string().min(1, "Enter your password."),
   rememberMe: z.boolean(),
 });
@@ -17,7 +18,7 @@ export const registerSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  username: z.string().trim().min(1, "Enter your username or email address."),
+  email: z.email("Enter a valid email address.").trim().toLowerCase(),
 });
 
 /** What a form shows after it is submitted. Passwords are never sent back. */

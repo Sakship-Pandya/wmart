@@ -37,7 +37,7 @@ export function CouponRowActions({ id, code, isActive }: { id: string; code: str
           })
         }
       >
-        <Power className={isActive ? "size-4 text-emerald-600" : "size-4 text-muted-foreground"} />
+        <Power className={isActive ? "size-4 text-success" : "size-4 text-muted-foreground"} />
       </Button>
       <Button
         variant="ghost"

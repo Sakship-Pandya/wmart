@@ -59,10 +59,12 @@ type Tone = "neutral" | "info" | "warning" | "success" | "danger";
 
 export const toneClass: Record<Tone, string> = {
   neutral: "bg-muted text-muted-foreground",
-  info: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
-  warning: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  success: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  danger: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+  // WMart theme colours (same as the store): blue = in progress, yellow = needs attention,
+  // green = done, red = problem.
+  info: "bg-primary/10 text-primary",
+  warning: "bg-star/25 text-heading",
+  success: "bg-success/10 text-success",
+  danger: "bg-destructive/10 text-destructive",
 };
 
 export const orderStatusInfo: Record<OrderStatus, { label: string; tone: Tone }> = {

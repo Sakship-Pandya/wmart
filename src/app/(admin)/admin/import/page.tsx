@@ -10,7 +10,7 @@ export default function AdminImportPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <Upload className="size-6 text-primary" />
+          <Upload className="size-6 text-brand" />
           <h1 className="text-2xl font-bold tracking-tight">Bulk Import</h1>
         </div>
         <p className="text-sm text-muted-foreground">

@@ -123,7 +123,7 @@ async function DashboardContent() {
               href={a.href}
               className={cn(
                 "rounded-lg border bg-card p-3 transition-colors hover:bg-muted",
-                a.value > 0 && "border-primary/40",
+                a.value > 0 && "border-brand/40",
               )}
             >
               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -204,7 +204,7 @@ async function DashboardContent() {
               <CardTitle className="text-base">Recent orders</CardTitle>
               <CardDescription>Latest 6</CardDescription>
             </div>
-            <Link href="/admin/orders" className="flex items-center gap-1 text-xs text-primary hover:underline">
+            <Link href="/admin/orders" className="flex items-center gap-1 text-xs text-brand hover:underline">
               All orders <ArrowRight className="size-3" />
             </Link>
           </CardHeader>
@@ -216,7 +216,7 @@ async function DashboardContent() {
                 {d.recentOrders.map((o) => (
                   <li key={o.id} className="flex items-center justify-between gap-2 py-2.5">
                     <div className="min-w-0">
-                      <Link href={`/admin/orders/${o.id}`} className="font-semibold text-primary hover:underline">
+                      <Link href={`/admin/orders/${o.id}`} className="font-semibold text-brand hover:underline">
                         {formatOrderNumber(o.orderNumber)}
                       </Link>
                       <span className="ml-2 text-muted-foreground">{asAddress(o.shippingAddress)?.fullName ?? o.email}</span>
@@ -240,7 +240,7 @@ async function DashboardContent() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-base">
-                <AlertTriangle className="size-4 text-amber-500" />
+                <AlertTriangle className="size-4 text-brand" />
                 Stock alerts
               </CardTitle>
               <CardDescription>
@@ -248,10 +248,10 @@ async function DashboardContent() {
               </CardDescription>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <Link href="/admin/products?status=needs-restock" className="flex items-center gap-1 text-xs text-primary hover:underline">
+              <Link href="/admin/products?status=needs-restock" className="flex items-center gap-1 text-xs text-brand hover:underline">
                 View all <ArrowRight className="size-3" />
               </Link>
-              <a href="/api/admin/export/products?status=needs-restock" className="flex items-center gap-1 text-xs text-primary hover:underline">
+              <a href="/api/admin/export/products?status=needs-restock" className="flex items-center gap-1 text-xs text-brand hover:underline">
                 <Download className="size-3" /> Restock list (CSV)
               </a>
             </div>
@@ -259,7 +259,7 @@ async function DashboardContent() {
           <CardContent>
             {catalogue.lowStockProducts.length === 0 ? (
               <div className="py-8 text-center text-xs text-muted-foreground">
-                <CheckCircle2 className="mx-auto mb-2 size-6 text-emerald-600" />
+                <CheckCircle2 className="mx-auto mb-2 size-6 text-success" />
                 All active products have more than {m.lowStockThreshold} units in stock.
               </div>
             ) : (
@@ -289,7 +289,7 @@ async function DashboardContent() {
           <span className="text-muted-foreground">Products:</span> <span className="font-semibold">{m.totalProducts}</span>
         </Link>
         <Link href="/admin/products?status=active" className="rounded-md border bg-card px-3 py-1.5 hover:bg-muted">
-          <span className="text-muted-foreground">Active:</span> <span className="font-semibold text-emerald-600">{m.activeProducts}</span>
+          <span className="text-muted-foreground">Active:</span> <span className="font-semibold text-success">{m.activeProducts}</span>
         </Link>
         <Link href="/admin/brands" className="rounded-md border bg-card px-3 py-1.5 hover:bg-muted">
           <span className="text-muted-foreground">Brands:</span> <span className="font-semibold">{m.totalBrands}</span>
@@ -328,7 +328,7 @@ function StatCard({
         <div className="text-2xl font-bold">{value}</div>
         <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
         {change !== undefined && change !== null && (
-          <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", up ? "text-emerald-600" : "text-red-600")}>
+          <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", up ? "text-success" : "text-destructive")}>
             {up ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
             {up ? "+" : ""}
             {change}% {changeLabel}

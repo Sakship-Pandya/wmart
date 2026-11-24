@@ -29,7 +29,7 @@ export function RevenueChart({ daily }: { daily: Day[] }) {
               // Full-height hit target, wider than the visible bar.
               <div key={d.day} tabIndex={0} className="group relative flex h-full flex-1 items-end justify-center outline-none">
                 <div
-                  className="w-full max-w-7 rounded-t-[4px] bg-primary/80 transition-colors group-hover:bg-primary group-focus-visible:bg-primary"
+                  className="w-full max-w-7 rounded-t-[4px] bg-brand/80 transition-colors group-hover:bg-brand group-focus-visible:bg-brand"
                   style={{ height: `${height}%` }}
                 />
                 <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md group-hover:block group-focus-visible:block">

@@ -9,6 +9,8 @@ import { PageHeader } from "@/components/shop/page-header";
 import { CheckoutForm } from "@/components/shop/checkout/checkout-form";
 import { OrderSummaryTotals } from "@/components/shop/cart/order-summary";
 import { getCart } from "@/server/queries/cart";
+import { getCustomerAddresses } from "@/server/queries/account";
+import { getCurrentCustomer } from "@/lib/customer-session";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +33,19 @@ export default function CheckoutPage() {
 }
 
 async function CheckoutContents() {
-  const cart = await getCart();
+  const [cart, customer] = await Promise.all([getCart(), getCurrentCustomer()]);
+  const saved = customer ? await getCustomerAddresses(customer.id) : null;
+  const toInitial = (a: NonNullable<typeof saved>["shipping"]) =>
+    a ? { fullName: a.fullName, phone: a.phone, line1: a.line1, line2: a.line2 ?? "", city: a.city, state: a.state, pincode: a.pincode } : undefined;
+  // Signed-in customers start with their email and saved addresses (My account → Addresses).
+  const initial = customer
+    ? {
+        email: customer.email,
+        shipping: toInitial(saved?.shipping ?? null),
+        billing: toInitial(saved?.billing ?? null),
+        billingDiffers: Boolean(saved?.billing && saved.shipping && saved.billing.line1 + saved.billing.pincode !== saved.shipping.line1 + saved.shipping.pincode),
+      }
+    : undefined;
 
   if (cart.lines.length === 0) {
     return (
@@ -50,7 +64,7 @@ async function CheckoutContents() {
 
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[1fr_380px]">
-      <CheckoutForm />
+      <CheckoutForm initial={initial} />
 
       <aside className="space-y-5 rounded-2xl bg-muted p-6 lg:sticky lg:top-6">
         <div className="flex items-center justify-between">

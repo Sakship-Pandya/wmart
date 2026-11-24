@@ -6,13 +6,34 @@ import crypto from "crypto";
 const SESSION_COOKIE_NAME = "wmart_admin_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
+// Signing key for admin sessions. In production AUTH_SECRET must be set (no fixed fallback,
+// otherwise anyone who reads this code could forge an admin login). A separate key is derived
+// for admins so admin and customer session cookies can never be swapped.
 function getAuthSecret(): string {
-  return process.env.AUTH_SECRET || "wmart-dev-auth-secret-change-in-production-2026";
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") throw new Error("AUTH_SECRET must be set in production.");
+    return "wmart-dev-only-admin-session-key";
+  }
+  return crypto.createHmac("sha256", secret).update("admin-session-v1").digest("hex");
+}
+
+/** Throws if admin sessions can't be signed. Call before checking a password. */
+export function assertAdminSessionConfigured() {
+  getAuthSecret();
 }
 
 function sign(payload: string): string {
   const secret = getAuthSecret();
   return crypto.createHmac("sha256", secret).update(payload).digest("hex");
+}
+
+/** Admins currently listed in ADMIN_EMAILS (an admin removed from the list loses access straight away). */
+function isListedAdmin(email: string): boolean {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .includes(email.toLowerCase());
 }
 
 export interface AdminSession {
@@ -52,7 +73,12 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   const [encoded, signature] = token.split(".");
   if (!encoded || !signature) return null;
 
-  const expectedSignature = sign(encoded);
+  let expectedSignature: string;
+  try {
+    expectedSignature = sign(encoded);
+  } catch {
+    return null; // AUTH_SECRET missing in production: treat as signed out instead of crashing the page
+  }
   if (
     signature.length !== expectedSignature.length ||
     !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
@@ -63,7 +89,7 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   try {
     const json = Buffer.from(encoded, "base64url").toString("utf-8");
     const session = JSON.parse(json) as AdminSession;
-    if (session.expiresAt < Date.now()) {
+    if (session.expiresAt < Date.now() || !isListedAdmin(session.email)) {
       return null;
     }
     return session;

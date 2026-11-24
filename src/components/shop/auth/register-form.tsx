@@ -6,7 +6,8 @@ import { register } from "@/server/actions/auth";
 import { initialAuthState } from "@/lib/validation/auth";
 import { Field, FormMessage, PasswordInput, TextInput, firstError } from "./form-parts";
 
-export function RegisterForm() {
+/** `next` = page to return to after registering (e.g. /checkout). */
+export function RegisterForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(register, initialAuthState);
   const emailError = firstError(state, "email");
   const passwordError = firstError(state, "password");
@@ -14,6 +15,7 @@ export function RegisterForm() {
   return (
     <form action={action} noValidate className="space-y-3.5">
       <FormMessage state={state} />
+      {next && <input type="hidden" name="next" value={next} />}
       <Field id="register-email" label="Email address" error={emailError}>
         <TextInput
           id="register-email"

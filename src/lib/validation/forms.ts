@@ -56,7 +56,7 @@ export const indianStates = [
   "West Bengal",
 ] as const;
 
-const address = z.object({
+export const addressSchema = z.object({
   fullName: z.string().trim().min(2, "Enter the full name."),
   phone: indianMobile,
   line1: z.string().trim().min(3, "Enter the house number and street."),
@@ -69,15 +69,15 @@ const address = z.object({
 export const checkoutSchema = z
   .object({
     email: z.email("Enter a valid email address.").trim(),
-    shipping: address,
+    shipping: addressSchema,
     billingSameAsShipping: z.boolean(),
-    billing: address.partial(),
+    billing: addressSchema.partial(),
     notes: z.string().trim().max(500),
     paymentMethod: z.enum(["payu", "cod"], "Choose a payment method."),
   })
   .superRefine((v, ctx) => {
     if (v.billingSameAsShipping) return;
-    const parsed = address.safeParse(v.billing);
+    const parsed = addressSchema.safeParse(v.billing);
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
         ctx.addIssue({ code: "custom", path: ["billing", ...issue.path], message: issue.message });

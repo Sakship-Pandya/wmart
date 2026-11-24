@@ -92,7 +92,7 @@ async function CustomerContent({ params }: { params: Promise<{ id: string }> }) 
                   customer.orders.map((o) => (
                     <TableRow key={o.id}>
                       <TableCell className="pl-4">
-                        <Link href={`/admin/orders/${o.id}`} className="font-semibold text-primary hover:underline">
+                        <Link href={`/admin/orders/${o.id}`} className="font-semibold text-brand hover:underline">
                           {formatOrderNumber(o.orderNumber)}
                         </Link>
                         <p className="text-xs text-muted-foreground">

@@ -5,56 +5,12 @@ import { Banknote, CreditCard, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FormMessage, TextInput, firstError } from "@/components/shop/auth/form-parts";
+import { AddressFields } from "@/components/shop/forms/address-fields";
 import { placeOrder } from "@/server/actions/checkout";
-import { indianStates, initialFormState, type FormState } from "@/lib/validation/forms";
+import { initialFormState } from "@/lib/validation/forms";
 import { cn } from "@/lib/utils";
 
 const focusRing = "focus-visible:border-brand focus-visible:ring-3 focus-visible:ring-brand/20";
-
-function AddressFields({ prefix, state }: { prefix: "shipping" | "billing"; state: FormState }) {
-  const err = (f: string) => firstError(state, `${prefix}.${f}`);
-  const val = (f: string) => state.values?.[`${prefix}.${f}`];
-  const id = (f: string) => `${prefix}-${f}`;
-  const ac = prefix === "shipping" ? "shipping" : "billing";
-  return (
-    <div className="grid gap-3.5 sm:grid-cols-2">
-      <Field id={id("fullName")} label="Full name" error={err("fullName")}>
-        <TextInput id={id("fullName")} name={`${prefix}.fullName`} autoComplete={`${ac} name`} defaultValue={val("fullName")} invalid={!!err("fullName")} />
-      </Field>
-      <Field id={id("phone")} label="Mobile number" error={err("phone")}>
-        <TextInput id={id("phone")} name={`${prefix}.phone`} type="tel" inputMode="tel" autoComplete={`${ac} tel`} placeholder="10-digit mobile" defaultValue={val("phone")} invalid={!!err("phone")} />
-      </Field>
-      <Field id={id("line1")} label="House no., building, street" error={err("line1")} className="sm:col-span-2">
-        <TextInput id={id("line1")} name={`${prefix}.line1`} autoComplete={`${ac} address-line1`} defaultValue={val("line1")} invalid={!!err("line1")} />
-      </Field>
-      <Field id={id("line2")} label="Area, landmark" optional error={err("line2")} className="sm:col-span-2">
-        <TextInput id={id("line2")} name={`${prefix}.line2`} autoComplete={`${ac} address-line2`} defaultValue={val("line2")} invalid={!!err("line2")} />
-      </Field>
-      <Field id={id("city")} label="Town / city" error={err("city")}>
-        <TextInput id={id("city")} name={`${prefix}.city`} autoComplete={`${ac} address-level2`} defaultValue={val("city")} invalid={!!err("city")} />
-      </Field>
-      <Field id={id("pincode")} label="Pincode" error={err("pincode")}>
-        <TextInput id={id("pincode")} name={`${prefix}.pincode`} inputMode="numeric" autoComplete={`${ac} postal-code`} maxLength={6} defaultValue={val("pincode")} invalid={!!err("pincode")} />
-      </Field>
-      <Field id={id("state")} label="State" error={err("state")} className="sm:col-span-2">
-        <select
-          id={id("state")}
-          name={`${prefix}.state`}
-          autoComplete={`${ac} address-level1`}
-          defaultValue={val("state") ?? ""}
-          aria-invalid={!!err("state") || undefined}
-          aria-describedby={err("state") ? `${id("state")}-error` : undefined}
-          className={cn("h-10 w-full rounded-full border border-input bg-transparent px-4 text-sm outline-none aria-invalid:border-destructive", focusRing)}
-        >
-          <option value="" disabled>Choose a state</option>
-          {indianStates.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      </Field>
-    </div>
-  );
-}
 
 const paymentOptions = [
   {
@@ -71,9 +27,12 @@ const paymentOptions = [
   },
 ] as const;
 
-export function CheckoutForm() {
+type SavedAddress = Parameters<typeof AddressFields>[0]["initial"];
+
+/** `initial` = signed-in customer's email and saved addresses (from My account), used to prefill the form. */
+export function CheckoutForm({ initial }: { initial?: { email?: string; shipping?: SavedAddress; billing?: SavedAddress; billingDiffers?: boolean } }) {
   const [state, action, pending] = useActionState(placeOrder, initialFormState);
-  const [billingSame, setBillingSame] = useState(true);
+  const [billingSame, setBillingSame] = useState(!initial?.billingDiffers);
   const [payment, setPayment] = useState<string>("payu");
   const err = (f: string) => firstError(state, f);
 
@@ -84,14 +43,14 @@ export function CheckoutForm() {
       <section className="space-y-3.5">
         <h2 className="text-lg font-bold">Contact</h2>
         <Field id="checkout-email" label="Email address" error={err("email")}>
-          <TextInput id="checkout-email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email} invalid={!!err("email")} />
+          <TextInput id="checkout-email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email ?? initial?.email} invalid={!!err("email")} />
         </Field>
         <p className="-mt-2 text-xs text-muted-foreground">We&apos;ll send your order confirmation and GST invoice here.</p>
       </section>
 
       <section className="space-y-3.5">
         <h2 className="text-lg font-bold">Shipping address</h2>
-        <AddressFields prefix="shipping" state={state} />
+        <AddressFields prefix="shipping" state={state} initial={initial?.shipping} />
       </section>
 
       <section className="space-y-3.5">
@@ -108,7 +67,7 @@ export function CheckoutForm() {
         {!billingSame && (
           <div className="space-y-3.5 animate-in fade-in slide-in-from-top-2 duration-300 motion-reduce:animate-none">
             <h2 className="text-lg font-bold">Billing address</h2>
-            <AddressFields prefix="billing" state={state} />
+            <AddressFields prefix="billing" state={state} initial={initial?.billing} />
           </div>
         )}
       </section>

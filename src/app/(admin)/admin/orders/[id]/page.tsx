@@ -118,7 +118,7 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
               <ol className="space-y-4 border-l pl-4">
                 {order.events.map((e) => (
                   <li key={e.id} className="relative">
-                    <span className="absolute -left-[21px] top-1.5 size-2.5 rounded-full border-2 border-background bg-primary" />
+                    <span className="absolute -left-[21px] top-1.5 size-2.5 rounded-full border-2 border-background bg-brand" />
                     <p className="text-sm font-medium">{eventTitle(e.type)}</p>
                     {e.message && <p className="text-sm text-muted-foreground">{e.message}</p>}
                     <p className="text-xs text-muted-foreground">
@@ -187,7 +187,7 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
                   {shipment.lastUpdate && <p className="text-xs text-muted-foreground">{shipment.lastUpdate}</p>}
                   {shipment.codAmount > 0 && <p className="text-xs">Collect on delivery: {formatPrice(shipment.codAmount)}</p>}
                   {shipment.awb && (
-                    <a href={delhiveryAwbUrl(shipment.awb)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                    <a href={delhiveryAwbUrl(shipment.awb)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand hover:underline">
                       Track on Delhivery <ExternalLink className="size-3" />
                     </a>
                   )}
@@ -204,7 +204,7 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
             <CardContent className="space-y-4 text-sm">
               <div>
                 {order.customer ? (
-                  <Link href={`/admin/customers/${order.customer.id}`} className="font-medium text-primary hover:underline">
+                  <Link href={`/admin/customers/${order.customer.id}`} className="font-medium text-brand hover:underline">
                     {[order.customer.firstName, order.customer.lastName].filter(Boolean).join(" ") || order.customer.email}
                   </Link>
                 ) : (
@@ -262,7 +262,7 @@ function Totals({ order }: { order: AdminOrderDetail }) {
           <>
             Discount{" "}
             {order.coupon ? (
-              <Link href={`/admin/coupons/${order.coupon.id}/edit`} className="font-mono text-primary hover:underline">{order.couponCode}</Link>
+              <Link href={`/admin/coupons/${order.coupon.id}/edit`} className="font-mono text-brand hover:underline">{order.couponCode}</Link>
             ) : (
               order.couponCode && <span className="font-mono">{order.couponCode}</span>
             )}
