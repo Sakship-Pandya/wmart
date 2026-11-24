@@ -218,15 +218,26 @@ export function orderGstSplit(order: {
   intraState: boolean;
   items: { lineTotal: number; gstRate: number }[];
 }) {
-  const charged = order.subtotal - order.discount;
+  const shares = allocateDiscount(order.subtotal, order.discount, order.items.map((i) => i.lineTotal));
   const totals = { taxable: 0, cgst: 0, sgst: 0, igst: 0 };
-  for (const item of order.items) {
-    const share = order.subtotal > 0 ? Math.round((item.lineTotal / order.subtotal) * charged) : 0;
-    const split = splitInclusivePrice(share, item.gstRate, order.intraState);
+  for (const [index, item] of order.items.entries()) {
+    const split = splitInclusivePrice(shares[index], item.gstRate, order.intraState);
     totals.taxable += split.taxable;
     totals.cgst += split.cgst;
     totals.sgst += split.sgst;
     totals.igst += split.igst;
   }
   return totals;
+}
+
+/**
+ * What was actually charged for each line after the coupon discount, shared by line value.
+ * The rounding leftover goes to the last line, so the shares always add up to subtotal - discount.
+ */
+export function allocateDiscount(subtotal: number, discount: number, lineTotals: number[]): number[] {
+  const charged = subtotal - discount;
+  if (subtotal <= 0 || lineTotals.length === 0) return lineTotals.map(() => 0);
+  const shares = lineTotals.map((t) => Math.round((t / subtotal) * charged));
+  shares[shares.length - 1] += charged - shares.reduce((a, b) => a + b, 0);
+  return shares;
 }

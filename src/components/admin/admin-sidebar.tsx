@@ -37,7 +37,7 @@ export function AdminSidebar({ session, counts }: { session?: AdminSession | nul
       }
     : {};
   return (
-    <aside className="hidden w-56 shrink-0 border-r bg-background p-4 md:flex md:flex-col md:justify-between min-h-screen">
+    <aside className="hidden w-56 shrink-0 border-r bg-background p-4 md:flex md:flex-col md:justify-between min-h-screen print:!hidden">
       <div>
         <Link href="/admin" className="mb-6 block text-lg font-bold">
           WMart Admin
