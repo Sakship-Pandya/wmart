@@ -13,7 +13,15 @@ import {
   paymentStatusInfo,
   shipmentStatusLabel,
 } from "@/lib/orders";
-import { addOrderNote, saveShipment, updateOrderStatus, updatePaymentStatus } from "@/server/actions/admin/orders";
+import {
+  addOrderNote,
+  bookDelhiveryShipment,
+  refreshDelhiveryTracking,
+  saveShipment,
+  updateOrderStatus,
+  updatePaymentStatus,
+  type DelhiveryActionResult,
+} from "@/server/actions/admin/orders";
 
 const selectClass =
   "h-9 w-full rounded-md border border-input bg-background px-2.5 text-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring";
@@ -140,6 +148,54 @@ export function ShipmentForm({
         {isPending ? "Saving…" : "Save shipment"}
       </Button>
     </form>
+  );
+}
+
+/** "Book with Delhivery" (creates the AWB) and "Refresh tracking". Manual entry below stays as a fallback. */
+export function DelhiveryActions({
+  orderId,
+  awb,
+  configured,
+  canBook,
+}: {
+  orderId: string;
+  awb: string | null;
+  configured: boolean;
+  canBook: boolean;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const go = (fn: () => Promise<DelhiveryActionResult>) =>
+    startTransition(async () => {
+      try {
+        const r = await fn();
+        if (r.ok) toast.success(r.message);
+        else toast.error(r.error);
+      } catch {
+        toast.error("Couldn't reach the server. Please try again.");
+      }
+    });
+
+  if (!configured) {
+    return (
+      <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+        Delhivery isn&apos;t connected yet (DELHIVERY_API_TOKEN). Enter the AWB by hand below.
+      </p>
+    );
+  }
+  if (awb) {
+    return (
+      <Button type="button" size="sm" variant="outline" className="w-full" disabled={isPending} onClick={() => go(() => refreshDelhiveryTracking(orderId))}>
+        {isPending ? "Checking…" : "Refresh tracking from Delhivery"}
+      </Button>
+    );
+  }
+  return (
+    <div className="space-y-1">
+      <Button type="button" size="sm" className="w-full" disabled={isPending || !canBook} onClick={() => go(() => bookDelhiveryShipment(orderId))}>
+        {isPending ? "Booking…" : "Book with Delhivery"}
+      </Button>
+      {!canBook && <p className="text-xs text-muted-foreground">Confirm the order first.</p>}
+    </div>
   );
 }
 

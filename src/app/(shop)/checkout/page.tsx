@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Checkout", robots: { index: false, follow: false } };
 
 // Checkout: contact, shipping/billing address, PayU or Cash on Delivery, order notes.
-// TODO (store UI): Delhivery pincode serviceability check.
 export default function CheckoutPage() {
   return (
     <div className="space-y-6">

@@ -1,5 +1,11 @@
 "use server";
 
+import { after } from "next/server";
+import { checkPincode } from "@/lib/delhivery";
+import { sendEmail } from "@/lib/email";
+import { orderConfirmation } from "@/lib/email-templates";
+import { siteUrl } from "@/lib/site-url";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addressSchema, checkoutSchema, type FormState } from "@/lib/validation/forms";
@@ -10,7 +16,7 @@ import { readCouponCookie, writeCouponCookie } from "@/server/coupons";
 import { getCurrentCustomer } from "@/lib/customer-session";
 import { grantOrderAccess } from "@/lib/order-access";
 import { db } from "@/lib/db";
-import type { AddressSnapshot } from "@/lib/orders";
+import { asAddress, type AddressSnapshot } from "@/lib/orders";
 import { CheckoutError, placeOrder as createOrder } from "@/server/orders/place-order";
 
 const addressFields = ["fullName", "phone", "line1", "line2", "city", "state", "pincode"] as const;
@@ -77,6 +83,31 @@ export async function placeOrder(_prev: FormState, formData: FormData): Promise<
   }
 
   const shippingAddress = data.shipping;
+
+  // Delhivery serviceability (only when Delhivery is connected). If Delhivery can't be reached,
+  // the order still goes through – staff check the address before booking the shipment.
+  try {
+    const service = await checkPincode(shippingAddress.pincode);
+    if (service && !service.serviceable) {
+      return {
+        status: "error",
+        message: "Delhivery doesn't deliver to this pincode yet. Please use another address, or message us on WhatsApp.",
+        fieldErrors: { "shipping.pincode": ["Delivery isn't available to this pincode."] },
+        values,
+      };
+    }
+    if (service && !service.cod) {
+      return {
+        status: "error",
+        message: "Cash on Delivery isn't available for this pincode. Online payment is coming soon – message us on WhatsApp to order.",
+        fieldErrors: { "shipping.pincode": ["Cash on Delivery isn't available here."] },
+        values,
+      };
+    }
+  } catch (err) {
+    console.error("checkout pincode check failed", err);
+  }
+
   const billingAddress = data.billingSameAsShipping ? data.shipping : addressSchema.parse(data.billing);
   const customer = await getCurrentCustomer();
 
@@ -103,6 +134,9 @@ export async function placeOrder(_prev: FormState, formData: FormData): Promise<
   await writeCouponCookie("");
   if (customer) await saveMissingAddresses(customer.id, shippingAddress, billingAddress);
   await grantOrderAccess(order.id);
+  // Confirmation email after the response, so a slow email service never delays the order page.
+  const trackUrl = `${await siteUrl()}/track-order`;
+  after(() => sendOrderConfirmation(order.id, trackUrl));
   revalidatePath("/admin/orders");
   revalidatePath("/admin");
   redirect(`/order/${order.id}?placed=1`);
@@ -121,5 +155,28 @@ async function saveMissingAddresses(customerId: string, shipping: AddressSnapsho
   } catch (err) {
     // Never fail a placed order because of this convenience step.
     console.error("saving checkout addresses failed", err);
+  }
+}
+
+async function sendOrderConfirmation(orderId: string, trackUrl: string) {
+  try {
+    const o = await db.order.findUnique({
+      where: { id: orderId },
+      select: {
+        orderNumber: true,
+        email: true,
+        total: true,
+        discount: true,
+        couponCode: true,
+        paymentMethod: true,
+        shippingAddress: true,
+        items: { select: { title: true, quantity: true, lineTotal: true } },
+      },
+    });
+    const address = o && asAddress(o.shippingAddress);
+    if (!o || !address) return;
+    await sendEmail(orderConfirmation({ ...o, shippingAddress: address }, trackUrl));
+  } catch (err) {
+    console.error("order confirmation email failed", err);
   }
 }

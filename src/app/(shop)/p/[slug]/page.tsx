@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/shop/breadcrumbs";
 import { PriceTag } from "@/components/shop/price-tag";
 import { ProductGrid } from "@/components/shop/product-grid";
 import { AddToCartForm } from "@/components/shop/cart/add-to-cart-form";
+import { PincodeCheck } from "@/components/shop/product/pincode-check";
 import { ProductGallery } from "@/components/shop/product/product-gallery";
 import { StickyCartBar } from "@/components/shop/product/sticky-cart-bar";
 import { getProductBySlug, listRelatedProducts } from "@/server/queries/products";
@@ -17,7 +18,7 @@ import { productPromo, trustPoints } from "@/lib/site";
 // Product page, e.g. /p/hp-hs04-41wh-battery – gallery, price, quantity, Add To Cart / Buy Now,
 // promo, trust points, specification table, description, part numbers, compatible models,
 // related products and a sticky Add To Cart bar (same features as the old site).
-// TODO (store UI): reviews (needs a Review table), Delhivery pincode check.
+// TODO (store UI): reviews (needs a Review table).
 
 export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -153,6 +154,8 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
             <div id="main-add-to-cart">
               <AddToCartForm productId={product.id} stock={product.stock} />
             </div>
+
+            <PincodeCheck />
 
             <ul className="grid gap-2 border-t pt-5 text-sm sm:grid-cols-2">
               {trustPoints.map((t) => (

@@ -11,8 +11,13 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
   type AuthFormState,
 } from "@/lib/validation/auth";
+import { emailConfigured, sendEmail } from "@/lib/email";
+import { passwordReset } from "@/lib/email-templates";
+import { createResetToken, customerForResetToken, RESET_VALID_MINUTES } from "@/lib/password-reset";
+import { siteUrl } from "@/lib/site-url";
 
 // Customer login / register / logout / lost password.
 
@@ -104,11 +109,46 @@ export async function requestPasswordReset(_prev: AuthFormState, formData: FormD
       values: { email: String(formData.get("email") ?? "") },
     };
   }
-  // TODO: email a one-time reset link (needs an email service and a reset-token table).
+  const email = parsed.data.email;
+  // 3 links per email and 10 per connection every 15 minutes – stops the form being used to spam inboxes.
+  const limited = tooManyAttempts(`reset:email:${email}`, 3) || tooManyAttempts(`reset:ip:${await clientIp()}`, 10);
+  if (!limited) {
+    const customer = await db.customer.findUnique({
+      where: { email },
+      select: { id: true, email: true, passwordHash: true, firstName: true, displayName: true },
+    });
+    if (customer) {
+      const url = `${await siteUrl()}/reset-password?token=${encodeURIComponent(createResetToken(customer))}`;
+      const name = customer.displayName || customer.firstName || customer.email.split("@")[0];
+      await sendEmail(passwordReset(name, customer.email, url, RESET_VALID_MINUTES));
+    }
+  }
   // Always the same answer, so nobody can find out which emails have accounts.
   return {
     status: "success",
-    message:
-      "If an account matches this email, we'll send you a link to reset your password. (Reset emails are not connected yet – contact us on WhatsApp if you're locked out.)",
+    message: emailConfigured()
+      ? "If an account matches this email, we've sent you a link to reset your password. Check your inbox (and spam folder)."
+      : "If an account matches this email, we'll send you a link to reset your password. (Reset emails are not connected yet – contact us on WhatsApp if you're locked out.)",
   };
+}
+
+/** Sets a new password from a reset link, then signs the customer in. */
+export async function resetPassword(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  assertSessionConfigured();
+  const parsed = resetPasswordSchema.safeParse({
+    token: formData.get("token") ?? "",
+    password: formData.get("password") ?? "",
+    confirm: formData.get("confirm") ?? "",
+  });
+  if (!parsed.success) return { status: "error", fieldErrors: z.flattenError(parsed.error).fieldErrors };
+
+  const customer = await customerForResetToken(parsed.data.token);
+  if (!customer) {
+    return { status: "error", message: "This reset link has expired or was already used. Please ask for a new one." };
+  }
+  const passwordHash = await hashPassword(parsed.data.password);
+  await db.customer.update({ where: { id: customer.id }, data: { passwordHash } });
+  // The new password hash also signs out every other device and makes this link unusable.
+  await createCustomerSession({ id: customer.id, passwordHash }, false);
+  redirect("/account");
 }
