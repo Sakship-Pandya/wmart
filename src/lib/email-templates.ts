@@ -62,6 +62,8 @@ export type ConfirmationOrder = {
   orderNumber: number;
   email: string;
   total: number;
+  discount: number; // paise, 0 when no coupon
+  couponCode: string | null;
   paymentMethod: "COD" | "PAYU";
   shippingAddress: AddressSnapshot;
   items: { title: string; quantity: number; lineTotal: number }[];
@@ -73,6 +75,10 @@ export function orderConfirmation(o: ConfirmationOrder, trackUrl: string): Email
   const a = o.shippingAddress;
   const address = [a.fullName, a.line1, a.line2, `${a.city}, ${a.state} – ${a.pincode}`, a.phone].filter(Boolean) as string[];
   const payment = o.paymentMethod === "COD" ? "Cash on Delivery – pay the courier when it arrives" : "Paid online";
+  const discountRow =
+    o.discount > 0
+      ? `<tr><td style="padding:6px 0;font-size:14px;color:#459647">Discount${o.couponCode ? ` (${escapeHtml(o.couponCode)})` : ""}</td><td style="padding:6px 0;font-size:14px;text-align:right;color:#459647">−${formatPrice(o.discount)}</td></tr>`
+      : "";
   const itemRows = o.items
     .map(
       (i) =>
@@ -86,6 +92,7 @@ export function orderConfirmation(o: ConfirmationOrder, trackUrl: string): Email
       `Thanks for your order ${number}!`,
       "",
       ...o.items.map((i) => `${i.title} × ${i.quantity} – ${formatPrice(i.lineTotal)}`),
+      ...(o.discount > 0 ? [`Discount${o.couponCode ? ` (${o.couponCode})` : ""}: -${formatPrice(o.discount)}`] : []),
       `Total: ${formatPrice(o.total)} (incl. 18% GST, free shipping)`,
       `Payment: ${payment}`,
       "",
@@ -97,7 +104,7 @@ export function orderConfirmation(o: ConfirmationOrder, trackUrl: string): Email
     html: layout(
       `Thanks for your order ${number}!`,
       p("We've received your order and will confirm it shortly. You'll get the Delhivery tracking number once it ships.") +
-        `<table style="width:100%;border-collapse:collapse;border-top:1px solid #eee;border-bottom:1px solid #eee;margin:8px 0 12px">${itemRows}
+        `<table style="width:100%;border-collapse:collapse;border-top:1px solid #eee;border-bottom:1px solid #eee;margin:8px 0 12px">${itemRows}${discountRow}
           <tr><td style="padding:8px 0;font-size:14px;font-weight:bold">Total</td><td style="padding:8px 0;font-size:14px;font-weight:bold;text-align:right">${formatPrice(o.total)}</td></tr></table>` +
         p(`<span style="color:#777">Incl. 18% GST · Free shipping</span><br>${escapeHtml(payment)}`) +
         p(`<strong>Delivering to</strong><br>${address.map(escapeHtml).join("<br>")}`) +

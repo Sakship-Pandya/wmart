@@ -166,6 +166,8 @@ async function sendOrderConfirmation(orderId: string, trackUrl: string) {
         orderNumber: true,
         email: true,
         total: true,
+        discount: true,
+        couponCode: true,
         paymentMethod: true,
         shippingAddress: true,
         items: { select: { title: true, quantity: true, lineTotal: true } },
