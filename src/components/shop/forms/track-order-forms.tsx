@@ -8,6 +8,9 @@ import { lookupOrder } from "@/server/actions/forms";
 import { initialFormState } from "@/lib/validation/forms";
 import { delhiveryAwbUrl } from "@/lib/site";
 
+/** Same orange button for both tracking forms; mt-auto keeps it at the bottom of its card. */
+const submitClass = "mt-auto h-10 w-full rounded-full bg-brand text-base font-semibold text-brand-foreground hover:bg-brand/85";
+
 /** Opens Delhivery's tracking page for the AWB number in a new tab. */
 export function AwbTrackingForm() {
   const [awb, setAwb] = useState("");
@@ -25,7 +28,7 @@ export function AwbTrackingForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-3.5">
+    <form onSubmit={onSubmit} noValidate className="flex flex-1 flex-col gap-3.5">
       <Field id="awb" label="Delhivery tracking number (AWB)" error={error}>
         <TextInput
           id="awb"
@@ -38,7 +41,7 @@ export function AwbTrackingForm() {
           invalid={!!error}
         />
       </Field>
-      <Button type="submit" className="h-10 w-full rounded-full bg-brand text-base font-semibold text-brand-foreground hover:bg-brand/85">
+      <Button type="submit" className={submitClass}>
         Track on Delhivery
         <ExternalLink data-icon="inline-end" />
       </Button>
@@ -51,7 +54,7 @@ export function OrderLookupForm() {
   const [state, action, pending] = useActionState(lookupOrder, initialFormState);
   const err = (f: string) => firstError(state, f);
   return (
-    <form action={action} noValidate className="space-y-3.5">
+    <form action={action} noValidate className="flex flex-1 flex-col gap-3.5">
       <FormMessage state={state} />
       <Field id="order-number" label="Order number" error={err("orderNumber")}>
         <TextInput id="order-number" name="orderNumber" placeholder="e.g. WM10234" defaultValue={state.values?.orderNumber} invalid={!!err("orderNumber")} />
@@ -59,7 +62,7 @@ export function OrderLookupForm() {
       <Field id="order-contact" label="Email or mobile number used for the order" error={err("contact")}>
         <TextInput id="order-contact" name="contact" autoComplete="email" defaultValue={state.values?.contact} invalid={!!err("contact")} />
       </Field>
-      <Button type="submit" disabled={pending} className="h-10 w-full rounded-full text-base font-semibold">
+      <Button type="submit" disabled={pending} className={submitClass}>
         {pending ? "Looking up…" : "Find my order"}
       </Button>
     </form>
