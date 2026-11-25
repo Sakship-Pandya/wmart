@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BadgeCheck, ShieldCheck, Truck } from "lucide-react";
+import { BadgeCheck, ShieldCheck, Truck, Zap } from "lucide-react";
 import { discountPercent, formatPrice } from "@/lib/format";
 import { business } from "@/lib/site";
 import { shortenText } from "@/lib/text";
 import { cn } from "@/lib/utils";
-import { CardBuyButtons, QuickView, type CardActionProduct } from "./product-card-actions";
+import { CardAddToCart, QuickView, type CardActionProduct } from "./product-card-actions";
 
 const LOW_STOCK = 5;
 /** Characters of the description shown in a row (the full text is on the product page). */
@@ -41,21 +41,21 @@ export function ProductCard({
   const excerpt = descriptionExcerpt(description);
 
   return (
-    <article className="group flex overflow-hidden rounded-2xl border bg-card transition hover:border-brand/40 hover:shadow-md">
+    // The whole card opens the product page: the title link stretches over it (after:absolute after:inset-0).
+    // Only the quick-view eye sits above it (z-10) and keeps its own action.
+    <article className="group relative flex cursor-pointer overflow-hidden rounded-2xl border bg-card transition hover:border-brand/40 hover:shadow-md">
       {/* Image */}
       <div className="relative w-28 shrink-0 self-stretch bg-muted sm:w-44 lg:w-52">
-        <Link href={href} tabIndex={-1} aria-hidden className="absolute inset-0">
-          {image && (
-            <Image
-              src={image.url}
-              alt=""
-              fill
-              loading={eager ? "eager" : "lazy"}
-              sizes="(min-width: 1024px) 208px, (min-width: 640px) 176px, 112px"
-              className="object-contain p-2 transition duration-300 group-hover:scale-105 sm:p-4"
-            />
-          )}
-        </Link>
+        {image && (
+          <Image
+            src={image.url}
+            alt=""
+            fill
+            loading={eager ? "eager" : "lazy"}
+            sizes="(min-width: 1024px) 208px, (min-width: 640px) 176px, 112px"
+            className="object-contain p-2 transition duration-300 group-hover:scale-105 sm:p-4"
+          />
+        )}
         {product.isOriginal && (
           <span className="pointer-events-none absolute top-2 left-2 rounded-md bg-brand px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-foreground">
             Original
@@ -63,7 +63,7 @@ export function ProductCard({
         )}
         <QuickView
           product={product}
-          className="absolute top-2 right-2 size-7 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+          className="absolute top-2 right-2 z-10 size-7 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
         />
       </div>
 
@@ -74,7 +74,10 @@ export function ProductCard({
           {product.category && <span className="normal-case tracking-normal"> · {product.category.name}</span>}
         </p>
 
-        <Link href={href} className="line-clamp-2 text-sm font-medium leading-snug text-heading hover:text-brand sm:text-base">
+        <Link
+          href={href}
+          className="line-clamp-2 text-sm font-medium leading-snug text-heading outline-none group-hover:text-brand after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-2 focus-visible:after:ring-brand/60 sm:text-base"
+        >
           {product.title}
         </Link>
 
@@ -111,8 +114,20 @@ export function ProductCard({
 
         {excerpt && <p className="line-clamp-1 text-xs text-muted-foreground sm:text-[13px]">{excerpt}</p>}
 
-        <div className="mt-1.5">
-          <CardBuyButtons product={product} />
+        <div className="mt-1.5 flex items-center gap-2">
+          {/* Add To Cart from tablet width up (hidden on phones to keep rows compact).
+              relative z-10 lifts it above the card-wide link so it adds to the cart instead of opening the page. */}
+          <div className="relative z-10 hidden w-36 sm:block">
+            <CardAddToCart product={product} />
+          </div>
+          {/* Buy Now looks like a button; the click is handled by the card-wide link (opens the product page). */}
+          <span
+            aria-hidden
+            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold whitespace-nowrap text-brand-foreground transition group-hover:bg-brand/85 sm:h-9 sm:w-36 sm:text-sm"
+          >
+            <Zap className="size-3.5" />
+            Buy Now
+          </span>
         </div>
       </div>
     </article>
