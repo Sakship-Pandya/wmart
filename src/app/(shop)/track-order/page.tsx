@@ -19,32 +19,33 @@ export default function TrackOrderPage() {
         intro="All WMart orders ship with Delhivery. Use the tracking number (AWB) from your shipping SMS or email, or look up your order."
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <section aria-labelledby="awb-heading" className="rounded-2xl border p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-full bg-brand/10 text-brand">
-              <Truck className="size-5" />
-            </span>
-            <h2 id="awb-heading" className="text-xl font-bold">Track with AWB number</h2>
-          </div>
+      <div className="grid items-stretch gap-6 md:grid-cols-2">
+        <TrackCard
+          id="awb-heading"
+          icon={<Truck className="size-5" />}
+          title="Track with AWB number"
+          subtitle="The tracking number from your shipping SMS or email."
+          footer={
+            <>
+              Opens Delhivery&apos;s tracking page.{" "}
+              <a href={delhiveryTrackingUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-brand hover:underline">
+                Track by mobile number
+              </a>
+            </>
+          }
+        >
           <AwbTrackingForm />
-          <p className="mt-4 text-sm text-muted-foreground">
-            Opens Delhivery&apos;s tracking page.{" "}
-            <a href={delhiveryTrackingUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-brand hover:underline">
-              Track by mobile number on Delhivery
-            </a>
-          </p>
-        </section>
+        </TrackCard>
 
-        <section aria-labelledby="lookup-heading" className="rounded-2xl bg-muted p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-full bg-background text-brand">
-              <PackageSearch className="size-5" />
-            </span>
-            <h2 id="lookup-heading" className="text-xl font-bold">Look up your order</h2>
-          </div>
+        <TrackCard
+          id="lookup-heading"
+          icon={<PackageSearch className="size-5" />}
+          title="Look up your order"
+          subtitle="Use the order number and the email or mobile you gave at checkout."
+          footer="Your order number starts with WM, e.g. WM10234."
+        >
           <OrderLookupForm />
-        </section>
+        </TrackCard>
       </div>
 
       <p className="text-sm text-muted-foreground">
@@ -55,5 +56,39 @@ export default function TrackOrderPage() {
         or see your orders in <Link href="/account/orders" className="font-medium text-brand hover:underline">My account</Link>.
       </p>
     </div>
+  );
+}
+
+/** One tracking option. Both cards share this layout, so headings, fields and buttons line up. */
+function TrackCard({
+  id,
+  icon,
+  title,
+  subtitle,
+  footer,
+  children,
+}: {
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  footer: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section aria-labelledby={id} className="flex flex-col rounded-2xl border bg-card p-6 shadow-sm">
+      <div className="mb-5 flex items-start gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">{icon}</span>
+        <div>
+          <h2 id={id} className="text-xl font-bold text-heading">
+            {title}
+          </h2>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+      {/* The form fills the space so both buttons sit at the same height. */}
+      <div className="flex flex-1 flex-col">{children}</div>
+      <p className="mt-4 border-t pt-4 text-sm text-muted-foreground">{footer}</p>
+    </section>
   );
 }

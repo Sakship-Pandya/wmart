@@ -4,11 +4,11 @@ import { useActionState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, ShoppingCart } from "lucide-react";
+import { Eye, ShoppingCart, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { addToCart, type CartActionState } from "@/server/actions/cart";
+import { addToCart, buyNow, type CartActionState } from "@/server/actions/cart";
 import { AddToCartForm } from "./cart/add-to-cart-form";
 import { PriceTag } from "./price-tag";
 import { cn } from "@/lib/utils";
@@ -51,6 +51,54 @@ export function CardAddToCart({ product }: { product: CardActionProduct }) {
       >
         <ShoppingCart className="size-4" />
         {pending ? "Adding…" : "Add To Cart"}
+      </button>
+    </form>
+  );
+}
+
+/** List-row buttons: "Add To Cart" (stays on the page) and "Buy Now" (adds 1 and goes to checkout). */
+export function CardBuyButtons({ product }: { product: CardActionProduct }) {
+  const router = useRouter();
+  const [addState, addAction, adding] = useActionState(addToCart, idle);
+  const [buyState, buyAction, buying] = useActionState(buyNow, idle);
+  const busy = adding || buying;
+
+  useEffect(() => {
+    if (addState.status === "success") toast.success(addState.message, { action: { label: "View cart", onClick: () => router.push("/cart") } });
+    else if (addState.status === "error") toast.error(addState.message);
+  }, [addState, router]);
+
+  useEffect(() => {
+    if (buyState.status === "error") toast.error(buyState.message);
+  }, [buyState]);
+
+  if (product.stock <= 0) {
+    return (
+      <p className="flex h-8 w-full items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground sm:h-9 sm:w-72 sm:text-sm">
+        Out of stock
+      </p>
+    );
+  }
+  return (
+    <form action={addAction} className="grid grid-cols-2 gap-2 sm:flex">
+      <input type="hidden" name="productId" value={product.id} />
+      <input type="hidden" name="quantity" value="1" />
+      <button
+        type="submit"
+        disabled={busy}
+        className="inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground transition hover:bg-primary/85 disabled:opacity-60 sm:h-9 sm:w-36 sm:text-sm"
+      >
+        <ShoppingCart className="size-4 shrink-0" />
+        {adding ? "Adding…" : "Add To Cart"}
+      </button>
+      <button
+        type="submit"
+        formAction={buyAction}
+        disabled={busy}
+        className="inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-brand px-4 text-xs font-semibold text-brand-foreground transition hover:bg-brand/85 disabled:opacity-60 sm:h-9 sm:w-36 sm:text-sm"
+      >
+        <Zap className="size-4 shrink-0" />
+        {buying ? "Please wait…" : "Buy Now"}
       </button>
     </form>
   );
