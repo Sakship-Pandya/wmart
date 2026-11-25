@@ -1,9 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayoutGrid, SlidersHorizontal, Grid3x3 } from "lucide-react";
+import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { listingHref, type Query } from "@/lib/listing-url";
@@ -14,9 +14,6 @@ export function ListingToolbar({
   query,
   sorts,
   sort,
-  perPageOptions,
-  perPage,
-  cols,
   total,
   from,
   to,
@@ -26,9 +23,6 @@ export function ListingToolbar({
   query: Query;
   sorts: Record<string, string>;
   sort: string;
-  perPageOptions: readonly number[];
-  perPage: number;
-  cols: 3 | 4;
   total: number;
   from: number;
   to: number;
@@ -63,52 +57,40 @@ export function ListingToolbar({
       </p>
 
       <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2">
-        <nav aria-label="Products per page" className="hidden items-center gap-1 text-sm sm:flex">
-          <span className="mr-1 text-muted-foreground">Show:</span>
-          {perPageOptions.map((n) => (
-            <Link
-              key={n}
-              href={listingHref(pathname, query, { per_page: n === 12 ? undefined : String(n) })}
-              scroll={false}
-              aria-current={n === perPage ? "true" : undefined}
-              className={cn("rounded-md px-1.5 py-0.5", n === perPage ? "font-bold text-heading" : "text-muted-foreground hover:text-brand")}
-            >
-              {n}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="hidden items-center gap-1 lg:flex" role="group" aria-label="Products per row">
-          {([3, 4] as const).map((n) => (
-            <Link
-              key={n}
-              href={listingHref(pathname, query, { cols: n === 4 ? undefined : "3", page: query.page })}
-              scroll={false}
-              aria-label={`${n} per row`}
-              aria-current={n === cols ? "true" : undefined}
-              className={cn("rounded-md p-1.5", n === cols ? "bg-muted text-heading" : "text-muted-foreground hover:text-brand")}
-            >
-              {n === 3 ? <Grid3x3 className="size-4" /> : <LayoutGrid className="size-4" />}
-            </Link>
-          ))}
-        </div>
-
-        <label className="sr-only" htmlFor="sort">Sort products</label>
-        <select
-          id="sort"
+        <Select
+          items={sorts}
           value={sort}
           disabled={pending}
-          onChange={(e) =>
+          onValueChange={(value) =>
             startTransition(() =>
-              router.push(listingHref(pathname, query, { sort: e.target.value === "default" ? undefined : e.target.value }), { scroll: false }),
+              router.push(listingHref(pathname, query, { sort: !value || value === "default" ? undefined : String(value) }), { scroll: false }),
             )
           }
-          className="h-9 rounded-full border bg-background px-4 text-sm outline-none focus-visible:border-brand focus-visible:ring-3 focus-visible:ring-brand/20"
         >
-          {Object.entries(sorts).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
+          <SelectTrigger
+            aria-label="Sort products"
+            className="h-9 min-w-52 gap-2 rounded-full border-border bg-background pr-3 pl-4 font-medium text-heading hover:border-brand data-popup-open:border-brand data-popup-open:ring-3 data-popup-open:ring-brand/20 focus-visible:border-brand focus-visible:ring-brand/20 dark:bg-background [&_[data-slot=select-value]]:flex-1"
+          >
+            <ArrowUpDown className="size-4 text-brand" aria-hidden />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent
+            align="end"
+            alignItemWithTrigger={false}
+            sideOffset={6}
+            className="min-w-56 rounded-2xl border p-1.5 shadow-lg ring-0"
+          >
+            {Object.entries(sorts).map(([value, label]) => (
+              <SelectItem
+                key={value}
+                value={value}
+                className="cursor-pointer rounded-xl py-2 pr-9 pl-3 text-sm text-heading focus:bg-brand/10 focus:text-brand data-highlighted:bg-brand/10 data-highlighted:text-brand data-selected:font-semibold data-selected:text-brand [&_svg]:text-brand"
+              >
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

@@ -2,15 +2,15 @@ import type { ReactNode } from "react";
 import { Breadcrumbs, type Crumb } from "@/components/shop/breadcrumbs";
 import { ProductGrid, ProductGridSkeleton } from "@/components/shop/product-grid";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getListing, parseListingParams, PER_PAGE_OPTIONS, SORTS, type ListingParams } from "@/server/queries/listing";
+import { getListing, parseListingParams, SORTS, type ListingParams } from "@/server/queries/listing";
 import type { Query } from "@/lib/listing-url";
 import { ListingFilters } from "./listing-filters";
 import { ListingToolbar } from "./listing-toolbar";
 import { Pagination } from "./pagination";
 
 /**
- * Shop-style product list: breadcrumbs, title, filter sidebar, sort / per-page / columns toolbar,
- * product grid and numbered pages. Used by /shop, /c/[slug], /brand/[slug] and /search.
+ * Shop-style product list: breadcrumbs, title, filter sidebar, sort toolbar,
+ * product list and numbered pages (12 per page). Used by /shop, /c/[slug], /brand/[slug] and /search.
  */
 export async function ProductListing({
   pathname,
@@ -29,10 +29,9 @@ export async function ProductListing({
 }) {
   const params = parseListingParams(query, scope);
   const result = await getListing(params);
-  const cols = query.cols === "3" ? 3 : 4;
   // Keep only the keys the listing understands in links (drops anything unexpected from the URL).
   const keep: Query = Object.fromEntries(
-    Object.entries(query).filter(([k]) => ["q", "category", "brand", "min", "max", "in_stock", "sort", "per_page", "cols", "page"].includes(k)),
+    Object.entries(query).filter(([k]) => ["q", "category", "brand", "min", "max", "in_stock", "sort", "page"].includes(k)),
   );
   const from = result.total === 0 ? 0 : (result.page - 1) * result.perPage + 1;
   const to = Math.min(result.page * result.perPage, result.total);
@@ -59,9 +58,6 @@ export async function ProductListing({
             query={keep}
             sorts={SORTS}
             sort={params.sort}
-            perPageOptions={PER_PAGE_OPTIONS}
-            perPage={result.perPage}
-            cols={cols}
             total={result.total}
             from={from}
             to={to}
@@ -69,7 +65,6 @@ export async function ProductListing({
           />
           <ProductGrid
             products={result.items}
-            cols={cols}
             empty={
               filtered ? (
                 <div className="rounded-2xl bg-muted px-6 py-12 text-center">

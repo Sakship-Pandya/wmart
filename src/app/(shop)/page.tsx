@@ -1,6 +1,20 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowRight, BadgeIndianRupee, MessageCircle, RotateCcw, ShieldCheck, Truck } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeIndianRupee,
+  BatteryFull,
+  Boxes,
+  Cable,
+  Keyboard,
+  MessageCircle,
+  Mouse,
+  PlugZap,
+  RotateCcw,
+  ShieldCheck,
+  Truck,
+  type LucideIcon,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { ProductGrid, ProductGridSkeleton } from "@/components/shop/product-grid";
@@ -8,6 +22,8 @@ import { NoProducts } from "@/components/shop/no-products";
 import { SearchBar } from "@/components/shop/search-bar";
 import { ProductTabs, type ProductTab } from "@/components/shop/home/product-tabs";
 import { HeroCarousel } from "@/components/shop/home/hero-carousel";
+import { ShopByPanel } from "@/components/shop/home/shop-by-panel";
+import { brandLogo } from "@/lib/brand-logos";
 import {
   listBestDeals,
   listBrandsWithProducts,
@@ -54,24 +70,14 @@ export default function HomePage() {
         ))}
       </section>
 
-      <section className="space-y-5">
-        <h2 className="text-2xl font-bold">Shop by category</h2>
-        <Suspense fallback={<div className="grid grid-cols-2 gap-4 md:grid-cols-4">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>}>
-          <CategoryTiles />
-        </Suspense>
-      </section>
+      <Suspense fallback={<ShopBySkeleton />}>
+        <ShopBy />
+      </Suspense>
 
       <section className="space-y-5">
         <h2 className="text-2xl font-bold">Products</h2>
         <Suspense fallback={<ProductGridSkeleton count={8} />}>
           <HomeProductTabs />
-        </Suspense>
-      </section>
-
-      <section className="space-y-5">
-        <h2 className="text-2xl font-bold">Shop by brand</h2>
-        <Suspense fallback={<Skeleton className="h-11 w-2/3 rounded-full" />}>
-          <BrandChips />
         </Suspense>
       </section>
     </div>
@@ -194,22 +200,108 @@ function HeroButtons({ top }: { top: { name: string; slug: string }[] }) {
   );
 }
 
-async function CategoryTiles() {
-  const categories = await listCategoriesWithProducts(8);
-  if (categories.length === 0) {
-    return <p className="text-muted-foreground">No categories yet – add products in the admin panel.</p>;
-  }
-  return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-      {categories.map((c) => (
-        <Link key={c.slug} href={`/c/${c.slug}`} className="group rounded-2xl border p-5 transition hover:border-brand hover:shadow-md">
-          <p className="font-semibold text-heading group-hover:text-brand">{c.name}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {c.count} {c.count === 1 ? "product" : "products"}
-          </p>
-        </Link>
+/** Same grid for categories and brands, so the two parts of "Shop by" line up. */
+const tileGrid = "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5";
+/** Tiles shown before the panel is expanded (one row on desktop). */
+const FIRST_TILES = 5;
+const tileBox =
+  "group flex items-center gap-2.5 rounded-2xl border bg-background p-2.5 transition sm:gap-3 sm:p-3 hover:-translate-y-0.5 hover:border-brand hover:shadow-md";
+
+function ShopBySkeleton() {
+  const row = (
+    <div className={tileGrid}>
+      {Array.from({ length: FIRST_TILES }, (_, i) => (
+        <Skeleton key={i} className="h-16 rounded-2xl sm:h-[72px]" />
       ))}
     </div>
+  );
+  return (
+    <div className="space-y-5 rounded-3xl border bg-muted/40 p-4 sm:p-7">
+      <Skeleton className="h-7 w-48" />
+      {row}
+      <Skeleton className="h-7 w-40" />
+      {row}
+    </div>
+  );
+}
+
+/** Splits tiles into the first row (always shown) and the rest (revealed by the arrow). */
+function splitTiles(tiles: React.ReactNode[]) {
+  return {
+    first: <div className={tileGrid}>{tiles.slice(0, FIRST_TILES)}</div>,
+    rest: tiles.length > FIRST_TILES ? <div className={tileGrid}>{tiles.slice(FIRST_TILES)}</div> : null,
+  };
+}
+
+const emptyPart = (message: string) => ({
+  first: <p className="text-muted-foreground">{message}</p>,
+  rest: null,
+});
+
+const categoryIcons: Record<string, LucideIcon> = {
+  "laptop-batteries": BatteryFull,
+  "laptop-adapters": PlugZap,
+  "power-cables": Cable,
+  "laptop-keyboards": Keyboard,
+  accessories: Mouse,
+};
+
+function countLabel(n: number) {
+  return `${n} ${n === 1 ? "product" : "products"}`;
+}
+
+async function ShopBy() {
+  const [categories, brands] = await Promise.all([listCategoriesWithProducts(50), listBrandsWithProducts(100)]);
+
+  const categoryTiles = categories.map((c) => {
+    const Icon = categoryIcons[c.slug] ?? Boxes;
+    return (
+      <Link key={c.slug} href={`/c/${c.slug}`} className={tileBox}>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand transition group-hover:bg-brand group-hover:text-brand-foreground sm:size-11">
+          <Icon className="size-4 sm:size-5" aria-hidden />
+        </span>
+        <span className="min-w-0">
+          <span className="block line-clamp-2 text-sm font-semibold leading-snug text-heading group-hover:text-brand">{c.name}</span>
+          <span className="block text-xs text-muted-foreground">{countLabel(c.count)}</span>
+        </span>
+      </Link>
+    );
+  });
+
+  const brandTiles = brands.map((b) => {
+    const logo = brandLogo(b.slug);
+    return (
+      <Link key={b.slug} href={`/brand/${b.slug}`} className={tileBox}>
+        {logo ? (
+        <span
+          aria-hidden
+          className="flex h-9 w-14 shrink-0 items-center justify-center rounded-xl bg-muted px-2 text-heading transition group-hover:bg-brand/10 group-hover:text-brand sm:h-11 sm:w-16"
+        >
+          <svg viewBox={logo.viewBox} fill="currentColor" className="h-6 w-full sm:h-7">
+            <path d={logo.path} />
+          </svg>
+        </span>
+      ) : (
+        <span
+          aria-hidden
+          className="flex h-9 w-14 shrink-0 items-center justify-center rounded-xl bg-heading text-sm font-bold text-background transition group-hover:bg-brand group-hover:text-brand-foreground sm:h-11 sm:w-16"
+        >
+          {b.name.charAt(0).toUpperCase()}
+        </span>
+      )}
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold text-heading group-hover:text-brand">{b.name}</span>
+          <span className="block text-xs text-muted-foreground">{countLabel(b.count)}</span>
+        </span>
+      </Link>
+    );
+  });
+
+  return (
+    <ShopByPanel
+      categories={categoryTiles.length ? splitTiles(categoryTiles) : emptyPart("No categories yet – add products in the admin panel.")}
+      brands={brandTiles.length ? splitTiles(brandTiles) : emptyPart("No brands yet.")}
+    />
   );
 }
 
@@ -226,23 +318,4 @@ async function HomeProductTabs() {
     if (perCategory[i].length > 0) tabs.push({ id: c.slug, label: c.name, content: <ProductGrid products={perCategory[i]} />, href: `/c/${c.slug}` });
   });
   return <ProductTabs tabs={tabs} />;
-}
-
-async function BrandChips() {
-  const brands = await listBrandsWithProducts();
-  if (brands.length === 0) return <p className="text-muted-foreground">No brands yet.</p>;
-  return (
-    <div className="flex flex-wrap gap-3">
-      {brands.map((b) => (
-        <Link
-          key={b.slug}
-          href={`/brand/${b.slug}`}
-          className="rounded-full border px-5 py-2 text-sm font-semibold text-heading transition hover:border-brand hover:text-brand"
-        >
-          {b.name}
-          <span className="ml-2 text-xs font-normal text-muted-foreground">{b.count}</span>
-        </Link>
-      ))}
-    </div>
-  );
 }

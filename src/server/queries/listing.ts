@@ -16,8 +16,8 @@ export const SORTS = {
 } as const;
 export type SortKey = keyof typeof SORTS;
 
-export const PER_PAGE_OPTIONS = [9, 12, 18, 24] as const;
-export const DEFAULT_PER_PAGE = 12;
+/** Products per listing page (fixed – customers move between pages with the page numbers). */
+export const PER_PAGE = 12;
 
 /** Options read from the URL, e.g. ?brand=dell&brand=hp&min=500&max=3000&sort=price-asc&page=2 */
 export type ListingParams = {
@@ -44,7 +44,6 @@ const num = (v: string | string[] | undefined) => {
 
 export function parseListingParams(sp: SearchParams, scope: ListingParams["scope"]): ListingParams {
   const sortRaw = Array.isArray(sp.sort) ? sp.sort[0] : sp.sort;
-  const perPage = num(sp.per_page);
   return {
     scope,
     categories: scope.categorySlug ? [] : list(sp.category),
@@ -53,7 +52,7 @@ export function parseListingParams(sp: SearchParams, scope: ListingParams["scope
     max: num(sp.max),
     inStock: sp.in_stock === "1",
     sort: sortRaw && sortRaw in SORTS ? (sortRaw as SortKey) : "default",
-    perPage: perPage && (PER_PAGE_OPTIONS as readonly number[]).includes(perPage) ? perPage : DEFAULT_PER_PAGE,
+    perPage: PER_PAGE,
     page: Math.max(1, num(sp.page) ?? 1),
   };
 }
@@ -66,6 +65,7 @@ const cardSelect = {
   price: true,
   stock: true,
   isOriginal: true,
+  description: true,
   brand: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true } },
   images: { select: { url: true, alt: true }, orderBy: { position: "asc" }, take: 1 },

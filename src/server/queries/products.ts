@@ -14,6 +14,7 @@ const cardSelect = {
   price: true,
   stock: true,
   isOriginal: true,
+  description: true,
   brand: { select: { name: true, slug: true } },
   category: { select: { name: true, slug: true } },
   images: { select: { url: true, alt: true }, orderBy: { position: "asc" }, take: 1 },

@@ -31,7 +31,8 @@ export function AccountHeading() {
 export function AccountNav() {
   const active = useActiveSection();
   return (
-    <nav aria-label="My account" className="rounded-2xl bg-muted p-3">
+    // Phones: a rounded card. md+: plain list inside the full-height side panel (see account layout).
+    <nav aria-label="My account" className="rounded-2xl bg-muted p-3 md:rounded-none md:bg-transparent md:p-0">
       <ul className="space-y-1">
         {accountSections.map((s) => {
           const isActive = s.href === active.href;
@@ -41,8 +42,8 @@ export function AccountNav() {
                 href={s.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "block rounded-xl px-4 py-2.5 font-medium text-heading transition-colors hover:bg-accent",
-                  isActive && "bg-accent",
+                  "block rounded-xl px-4 py-2.5 font-medium text-heading transition-colors hover:bg-accent md:hover:bg-background",
+                  isActive && "bg-accent md:bg-background md:text-brand md:shadow-sm",
                 )}
               >
                 {s.label}
@@ -50,9 +51,9 @@ export function AccountNav() {
             </li>
           );
         })}
-        <li>
+        <li className="md:mt-2 md:border-t md:pt-2">
           <form action={logout}>
-            <button type="submit" className="block w-full cursor-pointer rounded-xl px-4 py-2.5 text-left font-medium text-heading hover:bg-accent hover:text-destructive">
+            <button type="submit" className="block w-full cursor-pointer rounded-xl px-4 py-2.5 text-left font-medium text-heading hover:bg-accent hover:text-destructive md:hover:bg-background">
               Logout
             </button>
           </form>
