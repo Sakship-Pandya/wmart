@@ -8,7 +8,8 @@ import { GenerateInvoiceButton } from "@/components/admin/orders/invoice-buttons
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill } from "@/components/admin/shared/status-pill";
-import { OrderNoteForm, OrderStatusForm, PaymentStatusForm, ShipmentForm } from "@/components/admin/orders/order-actions";
+import { DelhiveryActions, OrderNoteForm, OrderStatusForm, PaymentStatusForm, ShipmentForm } from "@/components/admin/orders/order-actions";
+import { delhiveryConfigured } from "@/lib/delhivery";
 import { getAdminOrder, type AdminOrderDetail } from "@/server/queries/admin/orders";
 import { formatPrice } from "@/lib/format";
 import { shortenText } from "@/lib/text";
@@ -193,7 +194,18 @@ async function OrderContent({ params }: { params: Promise<{ id: string }> }) {
                   )}
                 </div>
               )}
-              <ShipmentForm orderId={order.id} awb={shipment?.awb ?? null} status={shipment?.status ?? null} />
+              <DelhiveryActions
+                orderId={order.id}
+                awb={shipment?.awb ?? null}
+                configured={delhiveryConfigured()}
+                canBook={order.status === "CONFIRMED" || order.status === "PACKED"}
+              />
+              <details className="group" open={!delhiveryConfigured()}>
+                <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-heading">Enter AWB / status by hand</summary>
+                <div className="pt-2">
+                  <ShipmentForm orderId={order.id} awb={shipment?.awb ?? null} status={shipment?.status ?? null} />
+                </div>
+              </details>
             </CardContent>
           </Card>
 

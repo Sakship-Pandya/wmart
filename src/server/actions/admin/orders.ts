@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { assignInvoiceNumber } from "@/server/invoice-number";
+import { trackShipment } from "@/lib/delhivery";
+import { applyTrackingUpdate, bookWithDelhivery } from "@/server/shipments";
 import type { OrderStatus, PaymentStatus, ShipmentStatus } from "@/generated/prisma/enums";
 import {
   PAYMENT_STATUSES,
@@ -161,6 +163,38 @@ export async function saveShipment(orderId: string, input: { awb: string; status
   ]);
   revalidateOrder(orderId, order.customerId);
   return { success: true };
+}
+
+export type DelhiveryActionResult = { ok: true; message: string } | { ok: false; error: string };
+
+/** Books the order with Delhivery (creates the AWB). Errors are returned, not thrown, so the admin sees the reason. */
+export async function bookDelhiveryShipment(orderId: string): Promise<DelhiveryActionResult> {
+  const session = await requireAdmin();
+  try {
+    const awb = await bookWithDelhivery(orderId, `admin:${session.email}`);
+    return { ok: true, message: `Booked with Delhivery – AWB ${awb}` };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Couldn't book with Delhivery." };
+  }
+}
+
+/** Pulls the latest Delhivery scan for the order's AWB and applies it. */
+export async function refreshDelhiveryTracking(orderId: string): Promise<DelhiveryActionResult> {
+  await requireAdmin();
+  try {
+    const shipment = await db.shipment.findFirst({
+      where: { orderId, awb: { not: null } },
+      orderBy: { createdAt: "desc" },
+      select: { awb: true },
+    });
+    if (!shipment?.awb) return { ok: false, error: "This order has no AWB yet." };
+    const update = await trackShipment(shipment.awb);
+    if (!update) return { ok: false, error: "Delhivery has no tracking for this AWB yet." };
+    await applyTrackingUpdate(shipment.awb, update, "delhivery");
+    return { ok: true, message: update.text ? `Latest: ${update.text}` : "Tracking updated" };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Couldn't reach Delhivery." };
+  }
 }
 
 /** Private note on the order timeline (not shown to the customer). */

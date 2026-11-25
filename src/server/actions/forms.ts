@@ -16,9 +16,11 @@ import { tooManyAttempts } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 import { grantOrderAccess } from "@/lib/order-access";
 import { parseOrderNumber } from "@/lib/orders";
+import { sendEmail, supportEmail } from "@/lib/email";
+import { contactCopy, contactToSupport } from "@/lib/email-templates";
 
 // Server actions for the contact form, order lookup, account details and saved addresses.
-// Contact emails are still a TODO.
+// Contact messages are emailed through Resend (lib/email.ts) when it is configured.
 
 export async function sendContactMessage(_prev: FormState, formData: FormData): Promise<FormState> {
   // Hidden anti-spam field: people never see it, bots fill it in.
@@ -33,12 +35,25 @@ export async function sendContactMessage(_prev: FormState, formData: FormData): 
   const parsed = contactSchema.safeParse(values);
   if (!parsed.success) return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error), values };
 
-  // TODO: email the message to support@wmart.co.in (e.g. with Resend) and send the customer a copy.
-  return {
-    status: "error",
-    message: "Sending messages isn't connected yet. Please contact us on WhatsApp or by phone for now.",
-    values,
-  };
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "local";
+  if (tooManyAttempts(`contact:ip:${ip}`, 5, 60 * 60 * 1000)) {
+    return { status: "error", message: "You've sent several messages already. Please wait a while, or reach us on WhatsApp.", values };
+  }
+  const message = parsed.data;
+  const result = await sendEmail(contactToSupport(message, supportEmail()));
+  if (!result.sent) {
+    return {
+      status: "error",
+      message:
+        result.reason === "not-configured"
+          ? "Sending messages isn't connected yet. Please contact us on WhatsApp or by phone for now."
+          : "Sorry, your message couldn't be sent just now. Please try again, or reach us on WhatsApp.",
+      values,
+    };
+  }
+  await sendEmail(contactCopy(message)); // the customer's copy is a nice-to-have; ignore failures
+  return { status: "success", message: "Thanks! Your message has been sent – we'll reply within one working day." };
 }
 
 export async function lookupOrder(_prev: FormState, formData: FormData): Promise<FormState> {

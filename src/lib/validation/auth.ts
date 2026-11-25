@@ -21,6 +21,14 @@ export const forgotPasswordSchema = z.object({
   email: z.email("Enter a valid email address.").trim().toLowerCase(),
 });
 
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1),
+    password: registerSchema.shape.password,
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "The two passwords don't match." });
+
 /** What a form shows after it is submitted. Passwords are never sent back. */
 export type AuthFormState = {
   status: "idle" | "error" | "success";
