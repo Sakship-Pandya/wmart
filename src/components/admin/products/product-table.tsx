@@ -353,12 +353,12 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                   </DropdownMenu>
                 </div>
               </TableHead>
-              <TableHead className="w-16">Image</TableHead>
+              <TableHead className="hidden w-16 sm:table-cell">Image</TableHead>
               <TableHead>Product</TableHead>
-              <TableHead className="w-32 whitespace-normal">Category & Brand</TableHead>
-              <TableHead className="w-28 whitespace-normal">Price & MRP</TableHead>
-              <TableHead className="w-24">Stock</TableHead>
-              <TableHead className="w-20">Status</TableHead>
+              <TableHead className="hidden w-32 whitespace-normal lg:table-cell">Category & Brand</TableHead>
+              <TableHead className="hidden w-28 whitespace-normal md:table-cell">Price & MRP</TableHead>
+              <TableHead className="hidden w-24 md:table-cell">Stock</TableHead>
+              <TableHead className="hidden w-20 lg:table-cell">Status</TableHead>
               <TableHead className="w-24 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -391,8 +391,8 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                     </button>
                   </TableCell>
 
-                  {/* Thumbnail */}
-                  <TableCell>
+                  {/* Thumbnail (hidden on phones) */}
+                  <TableCell className="hidden sm:table-cell">
                     <div className="relative flex size-12 items-center justify-center rounded-md border bg-muted/30 overflow-hidden">
                       {image ? (
                         <Image
@@ -451,19 +451,33 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                           </span>
                         )}
                       </div>
+
+                      {/* Phones / tablets: price, stock and status, since those columns are hidden there. */}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs lg:hidden">
+                        <span className="font-semibold text-foreground md:hidden">{formatPrice(product.price)}</span>
+                        <span
+                          className={`md:hidden ${product.stock <= 0 ? "text-destructive" : product.stock <= 10 ? "text-brand" : "text-muted-foreground"}`}
+                        >
+                          {product.stock <= 0 ? "Out of stock" : `${product.stock} in stock`}
+                        </span>
+                        <span className={product.isActive ? "text-success" : "text-muted-foreground"}>
+                          {product.isActive ? "Active" : "Draft"}
+                        </span>
+                        <span className="text-muted-foreground sm:hidden">· {product.brand.name}</span>
+                      </div>
                     </div>
                   </TableCell>
 
-                  {/* Category & Brand */}
-                  <TableCell className="whitespace-normal [overflow-wrap:anywhere]">
+                  {/* Category & Brand (large screens) */}
+                  <TableCell className="hidden whitespace-normal [overflow-wrap:anywhere] lg:table-cell">
                     <div className="space-y-1">
                       <div className="text-xs font-medium text-foreground">{product.brand.name}</div>
                       <div className="text-xs text-muted-foreground">{product.category.name}</div>
                     </div>
                   </TableCell>
 
-                  {/* Price & MRP */}
-                  <TableCell>
+                  {/* Price & MRP (tablets and up; phones see it under the title) */}
+                  <TableCell className="hidden md:table-cell">
                     <div className="space-y-0.5">
                       <div className="font-medium text-sm text-foreground">
                         {formatPrice(product.price)}
@@ -481,8 +495,8 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                     </div>
                   </TableCell>
 
-                  {/* Stock Badge */}
-                  <TableCell>
+                  {/* Stock Badge (tablets and up; phones see it under the title) */}
+                  <TableCell className="hidden md:table-cell">
                     {product.stock <= 0 ? (
                       <Badge variant="destructive" className="text-[11px] font-medium">
                         Out of stock
@@ -501,8 +515,8 @@ export function ProductTable({ products, totalCount, filters }: ProductTableProp
                     )}
                   </TableCell>
 
-                  {/* Active / Draft Status */}
-                  <TableCell>
+                  {/* Active / Draft Status (large screens; smaller ones see it under the title) */}
+                  <TableCell className="hidden lg:table-cell">
                     {product.isActive ? (
                       <Badge className="bg-success hover:bg-success text-white text-[11px] font-medium">
                         Active

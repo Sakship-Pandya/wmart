@@ -112,9 +112,9 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
         <Table>
           <TableHeader className="bg-muted/40">
             <TableRow>
-              <TableHead className="w-10"></TableHead>
+              <TableHead className="hidden w-10 sm:table-cell"></TableHead>
               <TableHead>Category Name</TableHead>
-              <TableHead>Slug</TableHead>
+              <TableHead className="hidden lg:table-cell">Slug</TableHead>
               <TableHead>Assigned Products</TableHead>
               <TableHead className="w-28 text-right">Actions</TableHead>
             </TableRow>
@@ -129,12 +129,12 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
             ) : (
               filteredCategories.map((category) => (
                 <TableRow key={category.id} className="hover:bg-muted/30">
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <div className="flex size-7 items-center justify-center rounded-md bg-muted text-muted-foreground">
                       <Layers className="size-3.5" />
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium text-foreground">
+                  <TableCell className="whitespace-normal font-medium text-foreground [overflow-wrap:anywhere]">
                     <div className="flex items-center gap-2">
                       <span>{category.name}</span>
                       <Link
@@ -146,7 +146,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
                       </Link>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
+                  <TableCell className="hidden font-mono text-xs text-muted-foreground lg:table-cell">
                     {category.slug}
                   </TableCell>
                   <TableCell>
