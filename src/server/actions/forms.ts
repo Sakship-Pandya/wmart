@@ -13,9 +13,12 @@ import { db } from "@/lib/db";
 import { createCustomerSession, getCurrentCustomer } from "@/lib/customer-session";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { tooManyAttempts } from "@/lib/rate-limit";
+import { headers } from "next/headers";
+import { grantOrderAccess } from "@/lib/order-access";
+import { parseOrderNumber } from "@/lib/orders";
 
 // Server actions for the contact form, order lookup, account details and saved addresses.
-// Contact emails and order lookup are still TODOs.
+// Contact emails are still a TODO.
 
 export async function sendContactMessage(_prev: FormState, formData: FormData): Promise<FormState> {
   // Hidden anti-spam field: people never see it, bots fill it in.
@@ -43,12 +46,34 @@ export async function lookupOrder(_prev: FormState, formData: FormData): Promise
   const parsed = orderLookupSchema.safeParse(values);
   if (!parsed.success) return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error), values };
 
-  // TODO: find the order by number + email/phone and show its status and Delhivery AWB.
-  return {
+  // Slow down guessing: 10 tries per order number and 30 per IP address every 15 minutes.
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "local";
+  const number = parseOrderNumber(parsed.data.orderNumber);
+  if (tooManyAttempts(`lookup:order:${number ?? parsed.data.orderNumber}`, 10) || tooManyAttempts(`lookup:ip:${ip}`, 30)) {
+    return { status: "error", message: "Too many attempts. Please wait 15 minutes and try again.", values };
+  }
+
+  // The order number alone is not enough: the email or mobile used for the order must match.
+  // Same message whether the number or the contact is wrong, so orders can't be probed.
+  const notFound: FormState = {
     status: "error",
-    message: "Order lookup isn't connected yet. If you have your Delhivery tracking number (AWB), use the box above.",
+    message: "We couldn't find an order with that number and email / mobile. Please check both and try again.",
     values,
   };
+  if (number === null) return notFound;
+  const order = await db.order.findUnique({ where: { orderNumber: number }, select: { id: true, email: true, phone: true } });
+  if (!order) return notFound;
+
+  const contact = parsed.data.contact.trim();
+  const digits = contact.replace(/\D/g, "").slice(-10);
+  const matches = contact.includes("@")
+    ? contact.toLowerCase() === order.email.toLowerCase()
+    : digits.length === 10 && digits === order.phone.replace(/\D/g, "").slice(-10);
+  if (!matches) return notFound;
+
+  await grantOrderAccess(order.id);
+  redirect(`/order/${order.id}`);
 }
 
 export async function updateAccountDetails(_prev: FormState, formData: FormData): Promise<FormState> {

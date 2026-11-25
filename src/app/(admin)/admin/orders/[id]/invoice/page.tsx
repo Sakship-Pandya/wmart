@@ -79,7 +79,7 @@ async function InvoiceContent({ params }: { params: Promise<{ id: string }> }) {
         </ul>
       )}
 
-      <div className="overflow-hidden rounded-lg border shadow-sm print:rounded-none print:border-0 print:shadow-none">
+      <div className="overflow-x-auto rounded-lg border shadow-sm print:overflow-visible print:rounded-none print:border-0 print:shadow-none">
         <TaxInvoice invoice={invoice} />
       </div>
     </div>

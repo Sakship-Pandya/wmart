@@ -12,7 +12,7 @@ export const metadata = { title: "Orders" };
 const dateFormat = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 
 // My account → Orders: the signed-in customer's orders, newest first.
-// TODO: order details page (/account/orders/[id]) with items, address, invoice and Delhivery tracking.
+// Each order opens /order/[id] (items, totals, address, Delhivery tracking).
 export default async function OrdersPage() {
   const customer = await requireCustomer("/account/orders");
   const orders = await getCustomerOrders(customer.id);
@@ -28,7 +28,9 @@ export default async function OrdersPage() {
           <li key={o.id} className="rounded-2xl border p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-bold text-heading">Order {formatOrderNumber(o.orderNumber)}</p>
+                <Link href={`/order/${o.id}`} className="font-bold text-heading hover:text-brand">
+                  Order {formatOrderNumber(o.orderNumber)} →
+                </Link>
                 <p className="text-sm text-muted-foreground">
                   {dateFormat.format(o.createdAt)} · {count} {count === 1 ? "item" : "items"} · {paymentMethodLabel[o.paymentMethod]}
                 </p>

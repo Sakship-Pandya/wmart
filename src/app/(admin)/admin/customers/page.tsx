@@ -73,12 +73,12 @@ async function CustomersContent({ searchParams }: { searchParams: SearchParams }
           <TableHeader>
             <TableRow>
               <TableHead>Customer</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead className="text-right">Orders</TableHead>
+              <TableHead className="hidden lg:table-cell">Phone</TableHead>
+              <TableHead className="hidden md:table-cell">Location</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Orders</TableHead>
               <TableHead className="text-right">Total spent</TableHead>
-              <TableHead>Last order</TableHead>
-              <TableHead>Joined</TableHead>
+              <TableHead className="hidden xl:table-cell">Last order</TableHead>
+              <TableHead className="hidden xl:table-cell">Joined</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -96,15 +96,23 @@ async function CustomersContent({ searchParams }: { searchParams: SearchParams }
                       {c.name}
                     </Link>
                     <p className="max-w-[16rem] text-xs text-muted-foreground [overflow-wrap:anywhere]">{c.email}</p>
+                    {/* Phones/tablets: phone and order count, since those columns are hidden there. */}
+                    <p className="text-xs text-muted-foreground lg:hidden">
+                      {c.phone && <span>{c.phone}</span>}
+                      <span className="sm:hidden">
+                        {c.phone ? " · " : ""}
+                        {c.orderCount} {c.orderCount === 1 ? "order" : "orders"}
+                      </span>
+                    </p>
                   </TableCell>
-                  <TableCell className="text-sm">{c.phone ?? "—"}</TableCell>
-                  <TableCell className="whitespace-normal text-sm">{c.location || "—"}</TableCell>
-                  <TableCell className="text-right">{c.orderCount}</TableCell>
+                  <TableCell className="hidden text-sm lg:table-cell">{c.phone ?? "—"}</TableCell>
+                  <TableCell className="hidden whitespace-normal text-sm md:table-cell">{c.location || "—"}</TableCell>
+                  <TableCell className="hidden text-right sm:table-cell">{c.orderCount}</TableCell>
                   <TableCell className="text-right font-semibold">{formatPrice(c.totalSpent)}</TableCell>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                  <TableCell className="hidden whitespace-nowrap text-xs text-muted-foreground xl:table-cell">
                     {c.lastOrderAt ? formatDateIST(c.lastOrderAt) : "—"}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-xs">
+                  <TableCell className="hidden whitespace-nowrap text-xs xl:table-cell">
                     <span className="text-muted-foreground">{formatDateIST(c.createdAt)}</span>
                     {!c.hasAccount && <StatusPill tone="neutral" label="Guest" className="ml-1.5" />}
                   </TableCell>
