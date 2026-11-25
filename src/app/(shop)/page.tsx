@@ -22,7 +22,7 @@ import { NoProducts } from "@/components/shop/no-products";
 import { SearchBar } from "@/components/shop/search-bar";
 import { ProductTabs, type ProductTab } from "@/components/shop/home/product-tabs";
 import { HeroCarousel } from "@/components/shop/home/hero-carousel";
-import { ShopByPanel } from "@/components/shop/home/shop-by-panel";
+import { FIRST_TILES, ShopByPanel, TILE_GRID, type ShopByItem } from "@/components/shop/home/shop-by-panel";
 import { brandLogo } from "@/lib/brand-logos";
 import {
   listBestDeals,
@@ -200,16 +200,10 @@ function HeroButtons({ top }: { top: { name: string; slug: string }[] }) {
   );
 }
 
-/** Same grid for categories and brands, so the two parts of "Shop by" line up. */
-const tileGrid = "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5";
-/** Tiles shown before the panel is expanded (one row on desktop). */
-const FIRST_TILES = 5;
-const tileBox =
-  "group flex items-center gap-2.5 rounded-2xl border bg-background p-2.5 transition sm:gap-3 sm:p-3 hover:-translate-y-0.5 hover:border-brand hover:shadow-md";
 
 function ShopBySkeleton() {
   const row = (
-    <div className={tileGrid}>
+    <div className={TILE_GRID}>
       {Array.from({ length: FIRST_TILES }, (_, i) => (
         <Skeleton key={i} className="h-16 rounded-2xl sm:h-[72px]" />
       ))}
@@ -224,19 +218,6 @@ function ShopBySkeleton() {
     </div>
   );
 }
-
-/** Splits tiles into the first row (always shown) and the rest (revealed by the arrow). */
-function splitTiles(tiles: React.ReactNode[]) {
-  return {
-    first: <div className={tileGrid}>{tiles.slice(0, FIRST_TILES)}</div>,
-    rest: tiles.length > FIRST_TILES ? <div className={tileGrid}>{tiles.slice(FIRST_TILES)}</div> : null,
-  };
-}
-
-const emptyPart = (message: string) => ({
-  first: <p className="text-muted-foreground">{message}</p>,
-  rest: null,
-});
 
 const categoryIcons: Record<string, LucideIcon> = {
   "laptop-batteries": BatteryFull,
@@ -253,10 +234,14 @@ function countLabel(n: number) {
 async function ShopBy() {
   const [categories, brands] = await Promise.all([listCategoriesWithProducts(50), listBrandsWithProducts(100)]);
 
-  const categoryTiles = categories.map((c) => {
+  // Card contents only – the panel wraps each one in a selectable button.
+  const categoryItems: ShopByItem[] = categories.map((c) => {
     const Icon = categoryIcons[c.slug] ?? Boxes;
-    return (
-      <Link key={c.slug} href={`/c/${c.slug}`} className={tileBox}>
+    return {
+      slug: c.slug,
+      name: c.name,
+      content: (
+      <>
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand transition group-hover:bg-brand group-hover:text-brand-foreground sm:size-11">
           <Icon className="size-4 sm:size-5" aria-hidden />
         </span>
@@ -264,14 +249,18 @@ async function ShopBy() {
           <span className="block line-clamp-2 text-sm font-semibold leading-snug text-heading group-hover:text-brand">{c.name}</span>
           <span className="block text-xs text-muted-foreground">{countLabel(c.count)}</span>
         </span>
-      </Link>
-    );
+      </>
+      ),
+    };
   });
 
-  const brandTiles = brands.map((b) => {
+  const brandItems: ShopByItem[] = brands.map((b) => {
     const logo = brandLogo(b.slug);
-    return (
-      <Link key={b.slug} href={`/brand/${b.slug}`} className={tileBox}>
+    return {
+      slug: b.slug,
+      name: b.name,
+      content: (
+      <>
         {logo ? (
         <span
           aria-hidden
@@ -293,15 +282,13 @@ async function ShopBy() {
           <span className="block truncate text-sm font-semibold text-heading group-hover:text-brand">{b.name}</span>
           <span className="block text-xs text-muted-foreground">{countLabel(b.count)}</span>
         </span>
-      </Link>
-    );
+      </>
+      ),
+    };
   });
 
   return (
-    <ShopByPanel
-      categories={categoryTiles.length ? splitTiles(categoryTiles) : emptyPart("No categories yet – add products in the admin panel.")}
-      brands={brandTiles.length ? splitTiles(brandTiles) : emptyPart("No brands yet.")}
-    />
+<ShopByPanel categories={categoryItems} brands={brandItems} />
   );
 }
 
