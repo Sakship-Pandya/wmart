@@ -44,7 +44,7 @@ export default function AdminProductsPage({ searchParams }: ProductsPageProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Suspense fallback={null}>
             <ExportLink endpoint="/api/admin/export/products" params={["q", "brand", "category", "status"]} />
           </Suspense>

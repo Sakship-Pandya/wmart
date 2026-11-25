@@ -111,11 +111,11 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
           <TableHeader>
             <TableRow>
               <TableHead>Order</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead className="hidden lg:table-cell">Date</TableHead>
               <TableHead>Customer</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Shipment</TableHead>
+              <TableHead className="hidden lg:table-cell">Payment</TableHead>
+              <TableHead className="hidden sm:table-cell">Status</TableHead>
+              <TableHead className="hidden xl:table-cell">Shipment</TableHead>
               <TableHead className="text-right">Total</TableHead>
             </TableRow>
           </TableHeader>
@@ -129,15 +129,16 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
             ) : (
               data.orders.map((o) => (
                 <TableRow key={o.id} className="group">
-                  <TableCell>
+                  <TableCell className="whitespace-normal">
                     <Link href={`/admin/orders/${o.id}`} className="font-semibold text-brand hover:underline">
                       {formatOrderNumber(o.orderNumber)}
                     </Link>
                     <p className="text-xs text-muted-foreground">
                       {o.itemCount} {o.itemCount === 1 ? "item" : "items"}
                     </p>
+                    <p className="text-xs text-muted-foreground lg:hidden">{formatDateTimeIST(o.createdAt)}</p>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{formatDateTimeIST(o.createdAt)}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-xs text-muted-foreground lg:table-cell">{formatDateTimeIST(o.createdAt)}</TableCell>
                   <TableCell className="whitespace-normal">
                     <p className="max-w-[14rem] font-medium [overflow-wrap:anywhere]">{o.customerName}</p>
                     <p className="text-xs text-muted-foreground">
@@ -145,14 +146,14 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
                       {!o.customerId && " · Guest"}
                     </p>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <StatusPill tone={paymentStatusInfo[o.paymentStatus].tone} label={paymentStatusInfo[o.paymentStatus].label} />
                     <p className="mt-1 text-xs text-muted-foreground">{o.paymentMethod === "COD" ? "COD" : "PayU"}</p>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <StatusPill tone={orderStatusInfo[o.status].tone} label={orderStatusInfo[o.status].label} />
                   </TableCell>
-                  <TableCell className="text-xs">
+                  <TableCell className="hidden text-xs xl:table-cell">
                     {o.shipment ? (
                       <>
                         <p>{shipmentStatusLabel[o.shipment.status]}</p>
@@ -162,7 +163,16 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right font-semibold">{formatPrice(o.total)}</TableCell>
+                  <TableCell className="whitespace-normal text-right">
+                    <p className="whitespace-nowrap font-semibold">{formatPrice(o.total)}</p>
+                    {/* Phones/tablets: status and payment, since those columns are hidden there. */}
+                    <div className="mt-1 flex flex-col items-end gap-1 lg:hidden">
+                      <StatusPill tone={orderStatusInfo[o.status].tone} label={orderStatusInfo[o.status].label} className="sm:hidden" />
+                      <span className="text-xs text-muted-foreground">
+                        {o.paymentMethod === "COD" ? "COD" : "PayU"} · {paymentStatusInfo[o.paymentStatus].label}
+                      </span>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
