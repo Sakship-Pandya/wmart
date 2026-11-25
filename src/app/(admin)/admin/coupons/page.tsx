@@ -78,10 +78,10 @@ async function CouponsContent({ searchParams }: { searchParams: SearchParams }) 
           <TableHeader>
             <TableRow>
               <TableHead>Code</TableHead>
-              <TableHead>Discount</TableHead>
-              <TableHead>Conditions</TableHead>
-              <TableHead>Usage</TableHead>
-              <TableHead>Valid</TableHead>
+              <TableHead className="hidden sm:table-cell">Discount</TableHead>
+              <TableHead className="hidden lg:table-cell">Conditions</TableHead>
+              <TableHead className="hidden md:table-cell">Usage</TableHead>
+              <TableHead className="hidden xl:table-cell">Valid</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -101,19 +101,24 @@ async function CouponsContent({ searchParams }: { searchParams: SearchParams }) 
                     <Link href={`/admin/coupons/${c.id}/edit`} className="font-mono font-semibold text-brand hover:underline">
                       {c.code}
                     </Link>
+                    {/* Phones: discount and usage under the code. */}
+                    <p className="text-xs text-muted-foreground md:hidden">
+                      <span className="sm:hidden">{couponValueText(c.type, c.value)} · </span>
+                      used {c.usedCount}/{c.usageLimit ?? "∞"}
+                    </p>
                   </TableCell>
-                  <TableCell className="font-medium">{couponValueText(c.type, c.value)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="hidden font-medium sm:table-cell">{couponValueText(c.type, c.value)}</TableCell>
+                  <TableCell className="hidden text-xs text-muted-foreground lg:table-cell">
                     {c.minOrderValue ? <p>Min. order {formatPrice(c.minOrderValue)}</p> : null}
                     {c.maxDiscount ? <p>Max. {formatPrice(c.maxDiscount)} off</p> : null}
                     {c.perCustomerLimit ? <p>{c.perCustomerLimit} per customer</p> : null}
                     {!c.minOrderValue && !c.maxDiscount && !c.perCustomerLimit && "None"}
                   </TableCell>
-                  <TableCell className="text-sm">
+                  <TableCell className="hidden text-sm md:table-cell">
                     {c.usedCount}
                     <span className="text-muted-foreground"> / {c.usageLimit ?? "∞"}</span>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                  <TableCell className="hidden whitespace-nowrap text-xs text-muted-foreground xl:table-cell">
                     {c.startsAt || c.expiresAt ? (
                       <>
                         {c.startsAt ? formatDateIST(c.startsAt) : "Now"} – {c.expiresAt ? formatDateIST(c.expiresAt) : "No expiry"}

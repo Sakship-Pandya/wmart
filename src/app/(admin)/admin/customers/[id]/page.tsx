@@ -75,9 +75,9 @@ async function CustomerContent({ params }: { params: Promise<{ id: string }> }) 
               <TableHeader>
                 <TableRow>
                   <TableHead className="pl-4">Order</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Payment</TableHead>
+                  <TableHead className="hidden lg:table-cell">Payment</TableHead>
                   <TableHead className="pr-4 text-right">Total</TableHead>
                 </TableRow>
               </TableHeader>
@@ -99,11 +99,11 @@ async function CustomerContent({ params }: { params: Promise<{ id: string }> }) 
                           {o._count.items} {o._count.items === 1 ? "item" : "items"}
                         </p>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{formatDateTimeIST(o.createdAt)}</TableCell>
+                      <TableCell className="hidden whitespace-nowrap text-xs text-muted-foreground sm:table-cell">{formatDateTimeIST(o.createdAt)}</TableCell>
                       <TableCell>
                         <StatusPill tone={orderStatusInfo[o.status].tone} label={orderStatusInfo[o.status].label} />
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <StatusPill tone={paymentStatusInfo[o.paymentStatus].tone} label={paymentStatusInfo[o.paymentStatus].label} />
                         <span className="ml-1.5 text-xs text-muted-foreground">{o.paymentMethod === "COD" ? "COD" : "PayU"}</span>
                       </TableCell>
