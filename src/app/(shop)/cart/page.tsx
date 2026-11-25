@@ -79,7 +79,7 @@ async function CartContents() {
       <aside className="space-y-5 rounded-2xl bg-muted p-6 lg:sticky lg:top-6">
         <h2 className="text-lg font-bold">Order summary</h2>
         <OrderSummaryTotals cart={cart} />
-        <CouponForm />
+        <CouponForm applied={cart.coupon} />
         <Link
           href="/checkout"
           className={cn(buttonVariants(), "h-11 w-full rounded-full bg-brand text-base font-semibold text-brand-foreground hover:bg-brand/85")}

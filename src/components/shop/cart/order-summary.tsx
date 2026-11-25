@@ -15,6 +15,14 @@ export function OrderSummaryTotals({ cart }: { cart: Cart }) {
           <dd className="font-medium text-success">− {formatPrice(cart.savings)}</dd>
         </div>
       )}
+      {cart.couponDiscount > 0 && cart.coupon?.ok && (
+        <div className="flex justify-between">
+          <dt className="text-muted-foreground">
+            Coupon <span className="font-mono font-medium text-heading">{cart.coupon.code}</span>
+          </dt>
+          <dd className="font-medium text-success">− {formatPrice(cart.couponDiscount)}</dd>
+        </div>
+      )}
       <div className="flex justify-between">
         <dt className="text-muted-foreground">Shipping</dt>
         <dd className="font-medium text-success">{cart.shipping === 0 ? "Free" : formatPrice(cart.shipping)}</dd>
