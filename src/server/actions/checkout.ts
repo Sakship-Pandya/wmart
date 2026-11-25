@@ -6,6 +6,7 @@ import { addressSchema, checkoutSchema, type FormState } from "@/lib/validation/
 import { fieldErrorsFrom, text } from "@/lib/validation/errors";
 import { getCart } from "@/server/queries/cart";
 import { readCartCookie, writeCartCookie } from "@/lib/cart-cookie";
+import { readCouponCookie, writeCouponCookie } from "@/server/coupons";
 import { getCurrentCustomer } from "@/lib/customer-session";
 import { grantOrderAccess } from "@/lib/order-access";
 import { db } from "@/lib/db";
@@ -83,6 +84,7 @@ export async function placeOrder(_prev: FormState, formData: FormData): Promise<
   try {
     order = await createOrder({
       lines: await readCartCookie(),
+      couponCode: (await readCouponCookie()) || undefined,
       email: data.email,
       shipping: shippingAddress,
       billing: billingAddress,
@@ -98,6 +100,7 @@ export async function placeOrder(_prev: FormState, formData: FormData): Promise<
 
   // Order saved: empty the cart, remember the addresses for next time, open the confirmation page.
   await writeCartCookie([]);
+  await writeCouponCookie("");
   if (customer) await saveMissingAddresses(customer.id, shippingAddress, billingAddress);
   await grantOrderAccess(order.id);
   revalidatePath("/admin/orders");

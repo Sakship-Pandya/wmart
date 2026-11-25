@@ -38,7 +38,7 @@ export async function updateOrderStatus(orderId: string, next: OrderStatus, note
 
   const order = await db.order.findUnique({
     where: { id: orderId },
-    select: { status: true, customerId: true, items: { select: { productId: true, quantity: true } } },
+    select: { status: true, customerId: true, couponId: true, items: { select: { productId: true, quantity: true } } },
   });
   if (!order) throw new Error("Order not found");
   if (!allowedNextStatuses[order.status].includes(next)) {
@@ -65,6 +65,11 @@ export async function updateOrderStatus(orderId: string, next: OrderStatus, note
 
     // Confirming an order issues its GST invoice number (same transaction, so no gaps on failure).
     const invoiceNumber = next === "CONFIRMED" ? await assignInvoiceNumber(tx, orderId, now) : null;
+
+    // A cancelled order gives its coupon use back (per-customer counts already skip cancelled orders).
+    if (next === "CANCELLED" && order.couponId) {
+      await tx.coupon.updateMany({ where: { id: order.couponId, usedCount: { gt: 0 } }, data: { usedCount: { decrement: 1 } } });
+    }
 
     if (restock) {
       for (const item of order.items) {
