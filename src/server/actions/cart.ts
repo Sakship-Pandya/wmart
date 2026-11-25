@@ -4,6 +4,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { MAX_QTY, readCartCookie, writeCartCookie } from "@/lib/cart-cookie";
+import { couponDiscount, couponProblem, normalizeCouponCode } from "@/lib/coupons";
+import { formatPrice } from "@/lib/format";
+import { getCurrentCustomer } from "@/lib/customer-session";
+import { findCoupon, writeCouponCookie } from "@/server/coupons";
+import { countCouponUses } from "@/server/orders/place-order";
+import { getCart } from "@/server/queries/cart";
 
 // Cart actions. Changing the cookie in a Server Action makes Next.js re-render the page,
 // so the cart page and the header count update by themselves.
@@ -78,8 +84,35 @@ export async function removeCartItem(formData: FormData): Promise<void> {
 }
 
 export async function applyCoupon(_prev: CartActionState, formData: FormData): Promise<CartActionState> {
-  const code = String(formData.get("coupon") ?? "").trim().toUpperCase();
-  if (!code) return { status: "error", message: "Enter a coupon code." };
-  // TODO: needs the Coupon table. ONLINE10 = 10% off when paying online with PayU.
-  return { status: "error", message: "Coupon codes aren't connected yet, so this code can't be applied." };
+  const raw = String(formData.get("coupon") ?? "").trim();
+  if (!raw) return { status: "error", message: "Enter a coupon code." };
+  const code = normalizeCouponCode(raw);
+  // Same message for a badly typed and an unknown code.
+  const coupon = code ? await findCoupon(code) : null;
+  if (!coupon) return { status: "error", message: `The code ${raw.toUpperCase()} doesn't exist.`, at: Date.now() };
+
+  const cart = await getCart();
+  if (cart.lines.length === 0) return { status: "error", message: "Add a product to your cart first.", at: Date.now() };
+  const problem = couponProblem(coupon, cart.subtotal);
+  if (problem) return { status: "error", message: problem, at: Date.now() };
+
+  // Signed-in customers: check "uses per customer" now (guests are checked at checkout, by email).
+  const customer = await getCurrentCustomer();
+  if (customer && coupon.perCustomerLimit !== null) {
+    const used = await countCouponUses(coupon.id, customer.email);
+    if (used >= coupon.perCustomerLimit) {
+      return { status: "error", message: `You've already used ${coupon.code}.`, at: Date.now() };
+    }
+  }
+
+  await writeCouponCookie(coupon.code);
+  return {
+    status: "success",
+    message: `${coupon.code} applied – you save ${formatPrice(couponDiscount(coupon, cart.subtotal))}.`,
+    at: Date.now(),
+  };
+}
+
+export async function removeCoupon(): Promise<void> {
+  await writeCouponCookie("");
 }

@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { isIntraState, type AddressSnapshot } from "@/lib/orders";
 import type { CartCookieLine } from "@/lib/cart-cookie";
+import { couponDiscount, couponProblem } from "@/lib/coupons";
 
 /** A problem the customer can fix (e.g. not enough stock); its message is shown at checkout. */
 export class CheckoutError extends Error {}
@@ -14,6 +15,15 @@ export interface PlaceOrderInput {
   notes: string;
   paymentMethod: "COD" | "PAYU";
   customerId: string | null;
+  couponCode?: string; // code applied in the cart (re-checked here)
+}
+
+/**
+ * How many times this email has used a coupon: its orders with that coupon, not counting
+ * cancelled ones (cancelling gives the use back). Emails are stored lower-case.
+ */
+export async function countCouponUses(couponId: string, email: string, client: Pick<typeof db, "order"> = db): Promise<number> {
+  return client.order.count({ where: { couponId, email: email.toLowerCase(), status: { not: "CANCELLED" } } });
 }
 
 /**
@@ -22,7 +32,7 @@ export interface PlaceOrderInput {
  * - stock is reduced only if enough is left (checked in the same UPDATE, so two
  *   customers can't both buy the last unit);
  * - the order keeps a copy of every line and both addresses.
- * Totals: free shipping, no COD fee and no coupon yet (decisions pending).
+ * Totals: free shipping and no COD fee (decisions pending); the cart coupon, if valid.
  */
 export async function placeOrder(input: PlaceOrderInput): Promise<{ id: string; orderNumber: number }> {
   // Merge duplicate lines for the same product.
@@ -80,7 +90,30 @@ export async function placeOrder(input: PlaceOrderInput): Promise<{ id: string; 
     const subtotal = items.reduce((s, i) => s + i.lineTotal, 0);
     const shippingFee = 0; // free shipping on all orders (current site)
     const codFee = 0; // decision pending
-    const discount = 0; // coupons at checkout: not connected yet
+
+    // Coupon: every rule is checked again here (it may have expired or run out since it was
+    // applied in the cart), and one use is claimed atomically, so two orders can't both take
+    // a coupon's last use.
+    let discount = 0;
+    let couponId: string | null = null;
+    let couponCode: string | null = null;
+    if (input.couponCode) {
+      const coupon = await tx.coupon.findUnique({ where: { code: input.couponCode } });
+      if (!coupon) throw new CheckoutError(`The code ${input.couponCode} no longer exists. Remove it from your cart to continue.`);
+      const problem = couponProblem(coupon, subtotal);
+      if (problem) throw new CheckoutError(`${problem} Remove it from your cart to continue.`);
+      if (coupon.perCustomerLimit !== null && (await countCouponUses(coupon.id, input.email, tx)) >= coupon.perCustomerLimit) {
+        throw new CheckoutError(`The code ${coupon.code} has already been used with ${input.email.toLowerCase()}. Remove it from your cart to continue.`);
+      }
+      const claimed = await tx.coupon.updateMany({
+        where: { id: coupon.id, ...(coupon.usageLimit !== null ? { usedCount: { lt: coupon.usageLimit } } : {}) },
+        data: { usedCount: { increment: 1 } },
+      });
+      if (claimed.count === 0) throw new CheckoutError(`The code ${coupon.code} has just been fully used. Remove it from your cart to continue.`);
+      discount = couponDiscount(coupon, subtotal);
+      couponId = coupon.id;
+      couponCode = coupon.code;
+    }
     const total = subtotal - discount + shippingFee + codFee;
 
     const order = await tx.order.create({
@@ -102,6 +135,8 @@ export async function placeOrder(input: PlaceOrderInput): Promise<{ id: string; 
         shippingFee,
         codFee,
         total,
+        couponId,
+        couponCode,
         items: { create: items },
         events: {
           create: {

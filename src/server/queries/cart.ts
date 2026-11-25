@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { readCartCookie } from "@/lib/cart-cookie";
+import { getAppliedCoupon, type AppliedCoupon } from "@/server/coupons";
 
 // Reads the cart cookie and fills in current product details and prices from the database.
 // Products that were deleted or hidden are dropped; quantities are capped at the stock left.
@@ -24,6 +25,9 @@ export type Cart = {
   subtotal: number; // paise, GST included
   mrpTotal: number;
   savings: number;
+  /** Coupon applied in the cart (checked against this cart), or null. */
+  coupon: AppliedCoupon | null;
+  couponDiscount: number; // paise; 0 when no coupon or it can't be used
   shipping: number; // free shipping on all orders
   total: number;
 };
@@ -68,14 +72,18 @@ export async function getCart(): Promise<Cart> {
 
   const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0);
   const mrpTotal = lines.reduce((s, l) => s + Math.max(l.mrp, l.price) * l.quantity, 0);
+  const coupon = lines.length ? await getAppliedCoupon(subtotal) : null;
+  const couponDiscount = coupon?.ok ? coupon.discount : 0;
   return {
     lines,
     itemCount: lines.reduce((s, l) => s + l.quantity, 0),
     subtotal,
     mrpTotal,
     savings: mrpTotal - subtotal,
+    coupon,
+    couponDiscount,
     shipping: 0,
-    total: subtotal,
+    total: subtotal - couponDiscount,
   };
 }
 
