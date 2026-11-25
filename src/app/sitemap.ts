@@ -11,7 +11,7 @@ import { policies } from "@/content/policies";
 // past that, split it with generateSitemaps().
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
-  const base = siteUrl();
+  const base = await siteUrl();
   const active = { isActive: true };
 
   const [products, categories, brands] = await Promise.all([
