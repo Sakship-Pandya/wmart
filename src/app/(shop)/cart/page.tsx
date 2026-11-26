@@ -50,16 +50,17 @@ async function CartContents() {
     <div className="grid items-start gap-8 lg:grid-cols-[1fr_360px]">
       <ul className="divide-y rounded-2xl border">
         {cart.lines.map((line) => (
-          <li key={line.productId} className="flex gap-4 p-4">
-            <Link href={`/p/${line.slug}`} className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-24">
+          // The whole row opens the product (the title link stretches over it); the quantity controls sit above it.
+          <li key={line.productId} className="group relative flex cursor-pointer gap-4 p-4 transition hover:bg-muted/40">
+            <span className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-24">
               {line.image && (
-                <Image src={line.image.url} alt={line.image.alt ?? line.title} fill sizes="96px" className="object-contain p-1.5" />
+                <Image src={line.image.url} alt="" fill sizes="96px" className="object-contain p-1.5" />
               )}
-            </Link>
+            </span>
             <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 space-y-1">
                 <p className="text-xs font-medium uppercase text-muted-foreground">{line.brand}</p>
-                <Link href={`/p/${line.slug}`} className="line-clamp-2 font-medium text-heading hover:text-brand">
+                <Link href={`/p/${line.slug}`} className="line-clamp-2 font-medium text-heading group-hover:text-brand outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-brand/60">
                   {line.title}
                 </Link>
                 <p className="text-sm">
@@ -68,7 +69,9 @@ async function CartContents() {
                     <span className="ml-2 text-muted-foreground line-through">{formatPrice(line.mrp)}</span>
                   )}
                 </p>
-                <CartLineControls key={`${line.productId}-${line.quantity}`} productId={line.productId} quantity={line.quantity} stock={line.stock} />
+                <div className="relative z-10 w-fit cursor-default">
+                  <CartLineControls key={`${line.productId}-${line.quantity}`} productId={line.productId} quantity={line.quantity} stock={line.stock} />
+                </div>
               </div>
               <p className="shrink-0 font-bold text-heading sm:text-right">{formatPrice(line.lineTotal)}</p>
             </div>

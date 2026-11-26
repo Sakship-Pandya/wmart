@@ -8,6 +8,7 @@ import { Loader2, ShoppingCart, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { buttonVariants } from "@/components/ui/button";
 import { removeCartItem } from "@/server/actions/cart";
+import { notifyCartChanged } from "@/components/shop/cart/cart-quantities";
 import type { Cart } from "@/server/queries/cart";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function MiniCart({ count, className }: { count: React.ReactNode; classNa
     startTransition(async () => {
       await removeCartItem(fd);
       await load();
+      notifyCartChanged();
       router.refresh();
     });
   }
@@ -84,12 +86,13 @@ export function MiniCart({ count, className }: { count: React.ReactNode; classNa
           {cart && cart.lines.length > 0 && (
             <ul className={cn("divide-y", pending && "opacity-60")}>
               {cart.lines.map((l) => (
-                <li key={l.productId} className="flex gap-3 py-3">
-                  <Link href={`/p/${l.slug}`} onClick={() => setOpen(false)} className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                // Whole row opens the product (stretched title link); the remove button sits above it.
+                <li key={l.productId} className="group relative flex cursor-pointer gap-3 py-3">
+                  <span className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                     {l.image && <Image src={l.image.url} alt="" fill sizes="64px" className="object-contain p-1" />}
-                  </Link>
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <Link href={`/p/${l.slug}`} onClick={() => setOpen(false)} className="line-clamp-2 text-sm font-medium text-heading hover:text-brand">
+                    <Link href={`/p/${l.slug}`} onClick={() => setOpen(false)} className="line-clamp-2 text-sm font-medium text-heading group-hover:text-brand outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-brand/60">
                       {l.title}
                     </Link>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -101,7 +104,7 @@ export function MiniCart({ count, className }: { count: React.ReactNode; classNa
                     onClick={() => remove(l.productId)}
                     disabled={pending}
                     aria-label={`Remove ${l.title}`}
-                    className="self-start rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive"
+                    className="relative z-10 self-start rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive"
                   >
                     <Trash2 className="size-4" />
                   </button>
