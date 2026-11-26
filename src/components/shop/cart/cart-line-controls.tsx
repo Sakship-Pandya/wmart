@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { removeCartItem, updateCartItem } from "@/server/actions/cart";
 import { QuantityStepper } from "./quantity-stepper";
+import { notifyCartChanged } from "./cart-quantities";
 
 // Quantity box + remove button for one cart line. Changes are saved straight away.
 export function CartLineControls({ productId, quantity, stock }: { productId: string; quantity: number; stock: number }) {
@@ -15,13 +16,19 @@ export function CartLineControls({ productId, quantity, stock }: { productId: st
     const fd = new FormData();
     fd.set("productId", productId);
     fd.set("quantity", String(next));
-    startTransition(() => updateCartItem(fd));
+    startTransition(async () => {
+      await updateCartItem(fd);
+      notifyCartChanged();
+    });
   }
 
   function remove() {
     const fd = new FormData();
     fd.set("productId", productId);
-    startTransition(() => removeCartItem(fd));
+    startTransition(async () => {
+      await removeCartItem(fd);
+      notifyCartChanged();
+    });
   }
 
   return (

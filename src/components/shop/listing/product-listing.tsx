@@ -47,7 +47,9 @@ export async function ProductListing({
 
       <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
         <aside className="hidden lg:block" aria-label="Filters">
-          <div className="sticky top-6">
+          {/* Stays in view while the products scroll, and scrolls on its own when the filters are
+              taller than the screen (overscroll-contain: reaching its end doesn't scroll the page). */}
+          <div className="sticky top-4 max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain pr-3 [scrollbar-gutter:stable] [scrollbar-width:thin]">
             <ListingFilters pathname={pathname} query={keep} {...filters} />
           </div>
         </aside>

@@ -101,12 +101,12 @@ async function OrderContent({
 
           <ul className="divide-y">
             {order.items.map((item) => (
-              <li key={item.id} className="flex items-center gap-3 py-3">
+              <li key={item.id} className="group relative flex cursor-pointer items-center gap-3 py-3">
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                   {item.imageUrl && <Image src={item.imageUrl} alt="" fill sizes="56px" className="object-contain p-1" />}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <Link href={`/p/${item.slug}`} className="line-clamp-2 text-sm font-medium text-heading hover:text-brand [overflow-wrap:anywhere]">
+                  <Link href={`/p/${item.slug}`} className="line-clamp-2 text-sm font-medium text-heading group-hover:text-brand [overflow-wrap:anywhere] outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-brand/60">
                     {item.title}
                   </Link>
                   <p className="text-xs text-muted-foreground">
