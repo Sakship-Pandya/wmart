@@ -12,6 +12,8 @@ import { db } from "@/lib/db";
 // signs out every other device.
 
 const COOKIE = "wmart_customer";
+/** Readable marker for "log out when the last tab closes" (see TabSessionGuard). */
+export const TAB_COOKIE = "wmart_tab_session";
 const REMEMBER_SECONDS = 60 * 60 * 24 * 30; // "Remember me": 30 days
 const SESSION_SECONDS = 60 * 60 * 24; // otherwise: until the browser closes, at most 1 day
 
@@ -48,10 +50,19 @@ export async function createCustomerSession(customer: { id: string; passwordHash
     // No maxAge without "Remember me": the browser drops the cookie when it closes.
     ...(remember ? { maxAge: seconds } : {}),
   });
+  // Without "Remember me" the session should also end when the customer closes their last
+  // WMart tab. Browsers keep session cookies until the whole browser closes, so a small client
+  // check (TabSessionGuard) does it; this readable cookie tells it to. "new" = claimed by the tab
+  // that just logged in. It holds no secret – the real session is the httpOnly cookie above.
+  const store = await cookies();
+  if (remember) store.delete(TAB_COOKIE);
+  else store.set(TAB_COOKIE, "new", { httpOnly: false, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/" });
 }
 
 export async function destroyCustomerSession() {
-  (await cookies()).delete(COOKIE);
+  const store = await cookies();
+  store.delete(COOKIE);
+  store.delete(TAB_COOKIE);
 }
 
 function readToken(token: string | undefined): Payload | null {
@@ -106,11 +117,18 @@ export function customerName(c: Pick<CurrentCustomer, "displayName" | "firstName
 }
 
 /** Only allow redirects back into this site (e.g. "/checkout"), never to another website. */
+/**
+ * Where to send the customer right after logging in / registering: `next` if it is a page on
+ * this site, else `fallback`. Logging in from "My account" lands on the home page (as requested);
+ * other pages such as /checkout are returned to.
+ */
 export function safeNext(next: unknown, fallback = "/"): string {
-  if (typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\")) {
-    // If next points to /account, redirect to home page "/" as requested
-    if (next === "/account") return fallback;
-    return next;
-  }
-  return fallback;
+  const target = sameSitePath(next);
+  if (!target || target === "/account") return fallback;
+  return target;
+}
+
+/** `next` if it is a path on this site (not "//evil.com" or "/\evil.com"), otherwise null. */
+export function sameSitePath(next: unknown): string | null {
+  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : null;
 }

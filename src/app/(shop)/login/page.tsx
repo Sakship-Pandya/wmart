@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/shop/breadcrumbs";
 import { AuthCard } from "@/components/shop/auth/auth-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCurrentCustomer, safeNext } from "@/lib/customer-session";
+import { getCurrentCustomer, safeNext, sameSitePath } from "@/lib/customer-session";
 
 export const metadata: Metadata = {
   title: "Log in or register",
@@ -29,7 +29,9 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
 
 async function LoginContent({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { next } = await searchParams;
+  // Already signed in (e.g. a "My account" link the browser cached before logging in):
+  // go straight to the page that was asked for – including My account itself.
+  if (await getCurrentCustomer()) redirect(sameSitePath(next) ?? "/");
   const target = safeNext(next, "/");
-  if (await getCurrentCustomer()) redirect(target);
   return <AuthCard next={target === "/" ? undefined : target} />;
 }

@@ -1,11 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { hashPassword, verifyAgainstDummy, verifyPassword } from "@/lib/password";
-import { assertSessionConfigured, createCustomerSession, destroyCustomerSession, safeNext } from "@/lib/customer-session";
+import { assertSessionConfigured, createCustomerSession, destroyCustomerSession, safeNext, TAB_COOKIE } from "@/lib/customer-session";
 import { clearAttempts, tooManyAttempts } from "@/lib/rate-limit";
 import {
   forgotPasswordSchema,
@@ -22,6 +23,15 @@ import { siteUrl } from "@/lib/site-url";
 // Customer login / register / logout / lost password.
 
 const WRONG_LOGIN = "Incorrect email address or password.";
+
+/**
+ * Signing in or out changes what every page shows (header, My account, checkout). Drop the
+ * browser's cached pages so nothing fetched before the change is reused – e.g. a "My account"
+ * link prefetched while signed out, which would still send the customer to the login page.
+ */
+function forgetCachedPages() {
+  revalidatePath("/", "layout");
+}
 
 async function clientIp() {
   const h = await headers();
@@ -53,6 +63,7 @@ export async function login(_prev: AuthFormState, formData: FormData): Promise<A
 
   clearAttempts(`login:email:${email}`);
   await createCustomerSession(customer, rememberMe);
+  forgetCachedPages();
   redirect(safeNext(formData.get("next"), "/"));
 }
 
@@ -92,11 +103,23 @@ export async function register(_prev: AuthFormState, formData: FormData): Promis
     select: { id: true, passwordHash: true },
   });
   await createCustomerSession(customer, true);
+  forgetCachedPages();
   redirect(safeNext(formData.get("next"), "/"));
+}
+
+/**
+ * Called by TabSessionGuard when a page opens with a "this tab only" login and no other WMart tab
+ * answers – i.e. the customer closed every tab without ticking "Remember me".
+ */
+export async function endTabSession(): Promise<void> {
+  if (!(await cookies()).get(TAB_COOKIE)) return; // only "this tab only" logins end this way
+  await destroyCustomerSession();
+  forgetCachedPages();
 }
 
 export async function logout(): Promise<void> {
   await destroyCustomerSession();
+  forgetCachedPages();
   redirect("/");
 }
 
@@ -150,5 +173,6 @@ export async function resetPassword(_prev: AuthFormState, formData: FormData): P
   await db.customer.update({ where: { id: customer.id }, data: { passwordHash } });
   // The new password hash also signs out every other device and makes this link unusable.
   await createCustomerSession({ id: customer.id, passwordHash }, false);
+  forgetCachedPages();
   redirect("/account");
 }
